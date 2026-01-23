@@ -1,0 +1,200 @@
+/**
+ * UI Event Handlers for Expressions+
+ */
+
+/* global toastr */
+
+/**
+ * @typedef {Object} ToastrLib
+ * @property {function(string, string=, Object=): void} error
+ * @property {function(string, string=, Object=): void} success  
+ * @property {function(string, string=, Object=): void} warning
+ * @property {function(string, string=, Object=): void} info
+ */
+
+/** @type {ToastrLib} */
+// @ts-ignore - toastr is a global library
+const toast = window.toastr;
+
+import { getRequestHeaders, saveSettingsDebounced } from '../../../../../script.js';
+
+import { EXPRESSION_API, OPTION_NO_FALLBACK, OPTION_EMOJI_FALLBACK } from './constants.js';
+import { spriteCache } from './state.js';
+import { getSettings } from './settings.js';
+import { getSpriteFolderName, getLastCharacterMessage } from './sprites.js';
+import { sendExpressionCall } from './expression-display.js';
+
+// Forward declarations - will be set by index.js
+let validateImages = null;
+let renderRulesList = null;
+
+/**
+ * Sets the validateImages function reference
+ * @param {Function} fn 
+ */
+export function setValidateImagesFn(fn) {
+    validateImages = fn;
+}
+
+/**
+ * Sets the renderRulesList function reference
+ * @param {Function} fn 
+ */
+export function setRenderRulesListFn(fn) {
+    renderRulesList = fn;
+}
+
+// ============================================================================
+// UI Event Handlers
+// ============================================================================
+
+/**
+ * Handles API selection change
+ */
+export function onApiChanged() {
+    const settings = getSettings();
+    settings.api = Number($('#expressions_plus_api').val());
+    saveSettingsDebounced();
+    
+    $('.expressions_plus_llm_prompt_block').toggle([EXPRESSION_API.llm, EXPRESSION_API.webllm].includes(settings.api));
+    $('.expressions_plus_prompt_type_block').toggle(settings.api === EXPRESSION_API.llm);
+}
+
+/**
+ * Handles fallback expression change
+ */
+export function onFallbackChanged() {
+    const settings = getSettings();
+    const value = String($('#expressions_plus_fallback').val());
+
+    if (value === OPTION_NO_FALLBACK) {
+        settings.fallback_expression = '';
+        settings.showDefault = false;
+    } else if (value === OPTION_EMOJI_FALLBACK) {
+        settings.fallback_expression = '';
+        settings.showDefault = true;
+    } else {
+        settings.fallback_expression = value;
+        settings.showDefault = false;
+    }
+
+    saveSettingsDebounced();
+}
+
+/**
+ * Handles profile selection change
+ */
+export async function onProfileChanged() {
+    const settings = getSettings();
+    settings.activeProfileId = String($('#expressions_plus_profile_select').val());
+    saveSettingsDebounced();
+    
+    // Refresh UI
+    if (renderRulesList) {
+        renderRulesList();
+    }
+    
+    // Refresh sprites list for new profile's custom expressions
+    const currentLastMessage = getLastCharacterMessage();
+    const spriteFolderName = getSpriteFolderName(currentLastMessage, currentLastMessage?.name);
+    if (spriteFolderName && validateImages) {
+        delete spriteCache[spriteFolderName];
+        await validateImages(spriteFolderName, true);
+    }
+}
+
+/**
+ * Handles clicking on expression image
+ */
+export function onClickExpressionImage() {
+    const expression = $(this).data('expression');
+    const currentLastMessage = getLastCharacterMessage();
+    const spriteFolderName = getSpriteFolderName(currentLastMessage, currentLastMessage?.name);
+    sendExpressionCall(spriteFolderName, expression, { force: true });
+}
+
+/**
+ * Handles expression upload
+ * @param {Event} event 
+ */
+export async function onClickExpressionUpload(event) {
+    event.stopPropagation();
+    
+    const expressionListItem = $(this).closest('.expression_plus_list_item');
+    const expression = expressionListItem.data('expression');
+    const name = $('#expresssions_plus_image_list').data('name');
+
+    const handleUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('label', expression);
+        formData.append('avatar', file);
+        formData.append('spriteName', expression);
+
+        try {
+            await fetch('/api/sprites/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            
+            delete spriteCache[name];
+            if (validateImages) {
+                await validateImages(name, true);
+            }
+            toast.success(`Uploaded sprite for ${expression}`);
+        } catch (error) {
+            console.error('Upload error:', error);
+            toast.error('Failed to upload sprite');
+        }
+
+        e.target.form.reset();
+    };
+
+    $('#expressions_plus_upload')
+        .off('change')
+        .on('change', handleUpload)
+        .trigger('click');
+}
+
+/**
+ * Handles expression deletion
+ * @param {Event} event 
+ */
+export async function onClickExpressionDelete(event) {
+    event.stopPropagation();
+
+    const { Popup } = await import('../../../../popup.js');
+    
+    const expressionListItem = $(this).closest('.expression_plus_list_item');
+    const expression = expressionListItem.data('expression');
+
+    if (expressionListItem.attr('data-expression-type') === 'failure') return;
+
+    const confirmation = await Popup.show.confirm(
+        'Delete Expression', 
+        `Are you sure you want to delete this expression sprite?<br><br>Expression: <tt>${expressionListItem.attr('data-filename')}</tt>`
+    );
+    
+    if (!confirmation) return;
+
+    const fileName = expressionListItem.attr('data-filename').replace(/\.[^/.]+$/, '');
+    const name = $('#expresssions_plus_image_list').data('name');
+
+    try {
+        await fetch('/api/sprites/delete', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+            body: JSON.stringify({ name, label: expression, spriteName: fileName }),
+        });
+        
+        delete spriteCache[name];
+        if (validateImages) {
+            await validateImages(name, true);
+        }
+    } catch (error) {
+        toast.error('Failed to delete image');
+    }
+}

@@ -1,0 +1,27 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+Copyright (C) 2026 Tyranomaster
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+NOTICE: This extension is based on and contains substantial portions of code
+from SillyTavern's built-in Expression Images extension, which is part of
+SillyTavern (https://github.com/SillyTavern/SillyTavern) and is licensed
+under the GNU Affero General Public License v3.0.
+
+For the full text of the AGPL-3.0 license, see:
+https://www.gnu.org/licenses/agpl-3.0.html
