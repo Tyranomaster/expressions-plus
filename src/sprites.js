@@ -10,7 +10,7 @@ import { debounce_timeout } from '../../../../constants.js';
 import { debounce } from '../../../../utils.js';
 import { system_message_types } from '../../../../../script.js';
 
-import { RESET_SPRITE_LABEL, RULE_TYPE } from './constants.js';
+import { RESET_SPRITE_LABEL, RULE_TYPE, DEFAULT_EXPRESSION_SET } from './constants.js';
 import { spriteCache } from './state.js';
 import { getSettings } from './settings.js';
 import { getActiveProfile } from './profiles.js';
@@ -203,7 +203,47 @@ export function getSpriteFolderName(characterMessage = null, characterName = nul
         spriteFolderName = expressionOverride.path;
     }
 
+    // Apply expression set if configured
+    const expressionSet = getCharacterExpressionSetFromSettings(avatarFileName);
+    if (expressionSet && expressionSet !== DEFAULT_EXPRESSION_SET) {
+        spriteFolderName = `${spriteFolderName}/${expressionSet}`;
+    }
+
     return spriteFolderName;
+}
+
+/**
+ * Gets the base sprite folder name without expression set
+ * @param {Object} [characterMessage] 
+ * @param {string} [characterName] 
+ * @returns {string}
+ */
+export function getBaseSpriteFolderName(characterMessage = null, characterName = null) {
+    const context = getContext();
+    let spriteFolderName = characterName ?? context.name2;
+    const message = characterMessage ?? getLastCharacterMessage();
+    const avatarFileName = getFolderNameByMessage(message);
+    
+    // Check for expression override in original extension settings
+    const expressionOverride = extension_settings.expressionOverrides?.find(e => e.name == avatarFileName);
+    if (expressionOverride && expressionOverride.path) {
+        spriteFolderName = expressionOverride.path;
+    }
+
+    return spriteFolderName;
+}
+
+/**
+ * Gets the expression set for a character from settings
+ * @param {string} characterId - Character avatar filename
+ * @returns {string} Expression set folder name
+ */
+function getCharacterExpressionSetFromSettings(characterId) {
+    if (!characterId) return DEFAULT_EXPRESSION_SET;
+    
+    const settings = getSettings();
+    const assignment = settings.characterAssignments?.find(a => a.characterId === characterId);
+    return assignment?.expressionSet || DEFAULT_EXPRESSION_SET;
 }
 
 /**

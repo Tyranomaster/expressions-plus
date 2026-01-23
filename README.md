@@ -13,7 +13,7 @@ Expressions+ uses exclusively the **Local** classification API, which leverages 
 - Fine-grained threshold controls
 - Real-time confidence score visualization
 
-The local model downloads automatically on first use (~50MB) and runs entirely in your browser.
+The local model downloads automatically on first use (~50MB) and runs entirely locally.
 
 > **First-Time Setup:** The first time you receive a message after installing the extension, there may be a brief delay (10-30 seconds depending on your connection) while the classification model downloads from Hugging Face. Subsequent classifications will be nearly instant as the model is cached locally.
 
@@ -107,6 +107,29 @@ Perfect for debugging your custom rules or understanding how the classifier inte
 
 Expand the "Character Profile Assignments" section to assign specific profiles to characters. Unassigned characters use the active profile.
 
+### Expression Sets (v0.2.0+)
+
+Expression Sets allow you to organize multiple sprite collections for each character and switch between them easily.
+
+#### Setting Up Expression Sets
+
+1. In your character's expression folder (e.g., `/characters/CharacterName/`), create subfolders for each sprite set
+   - Example: `/characters/CharacterName/chibi/` and `/characters/CharacterName/full/`
+2. Place the corresponding sprite images in each subfolder
+3. The base folder's sprites serve as the "Default" set
+
+#### Switching Expression Sets
+
+There are three ways to switch expression sets:
+
+1. **Character Assignments UI**: In the "Character Profile Assignments" section, each character now has an "Expression Set" dropdown
+2. **Wand Menu**: Click the Expressions+ button in the chat wand menu (magic wand icon) to quickly switch sets
+3. **Slash Command**: Use `/explus-expressionset` to manage sets:
+   - `/explus-expressionset action=list` - List available sets for current character
+   - `/explus-expressionset action=get` - Get current expression set
+   - `/explus-expressionset action=set [set name]` - Switch to a different set
+   - Use `character=name` parameter to target a specific character
+
 ---
 
 ## Inherited Features (from Built-in Expressions)
@@ -140,6 +163,11 @@ The local classifier model recognizes 28 emotions:
   - `/explus-profile action=list` - List all available profiles
   - `/explus-profile action=get` - Get the current active profile name
   - `/explus-profile action=set [profile name]` - Switch to a different profile
+- `/explus-expressionset` - Manage expression sets (sprite subfolders):
+  - `/explus-expressionset action=list` - List available sets for current character
+  - `/explus-expressionset action=get` - Get the current expression set
+  - `/explus-expressionset action=set [set name]` - Switch to a different set
+  - Optional: `character=name` parameter to target a specific character
 
 ---
 
