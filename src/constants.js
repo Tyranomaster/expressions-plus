@@ -25,6 +25,7 @@ export const OPTION_NO_FALLBACK = '#none';
 export const OPTION_EMOJI_FALLBACK = '#emoji';
 export const RESET_SPRITE_LABEL = '#reset';
 export const DEFAULT_PROFILE_NAME = 'Default';
+export const DEFAULT_EXPRESSION_SET = ''; // Empty string represents base folder
 
 /** @enum {number} */
 export const EXPRESSION_API = {
@@ -88,6 +89,14 @@ export const RULE_TYPE = {
  * @typedef {Object} CharacterProfileAssignment
  * @property {string} characterId - Character avatar filename (without extension)
  * @property {string} profileId - Profile ID assigned to this character
+ * @property {string} [expressionSet] - Currently active expression set subfolder (empty = base folder)
+ * @property {string[]} [expressionSets] - User-configured expression set folder names
+ */
+
+/**
+ * @typedef {Object} ExpressionSet
+ * @property {string} name - Display name of the expression set
+ * @property {string} folder - Subfolder name (empty for base folder)
  */
 
 /**

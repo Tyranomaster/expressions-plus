@@ -21,6 +21,7 @@ import {
     insightPanelVisible,
     clearSpriteCache,
     setInsightPanelVisible,
+    clearExpressionSetsCache,
 } from './src/state.js';
 
 import {
@@ -35,6 +36,13 @@ import {
 } from './src/api.js';
 
 import {
+    getExpressionSets,
+    setCharacterExpressionSet,
+    getCharacterExpressionSet,
+    dispatchExpressionSetChanged,
+} from './src/expression-sets.js';
+
+import {
     isVisualNovelMode,
     updateVisualNovelModeDebounced,
     chooseSpriteForExpression,
@@ -43,6 +51,8 @@ import {
     createListItemHtml,
     setGetExpressionsListFn as setSpritesGetExpressionsListFn,
     setUpdateVisualNovelModeFn as setSpritesUpdateVisualNovelModeFn,
+    getFolderNameByMessage,
+    getLastCharacterMessage,
 } from './src/sprites.js';
 
 import {
@@ -108,6 +118,9 @@ import {
 import {
     renderCharacterAssignments,
     onCharacterProfileChanged,
+    onCharacterExpressionSetChanged,
+    onExpressionSetAdd,
+    onExpressionSetRemove,
 } from './src/ui-character-assignments.js';
 
 import {
@@ -115,6 +128,7 @@ import {
     setGetExpressionLabelFn as setSlashGetExpressionLabelFn,
     setRenderProfileSelectorFn,
     setRenderRulesListFn as setSlashRenderRulesListFn,
+    setRenderCharacterAssignmentsFn as setSlashRenderCharacterAssignmentsFn,
 } from './src/slash-commands.js';
 
 export { MODULE_NAME };
@@ -180,6 +194,7 @@ setRulesGetExpressionsListFn(() => getExpressionsList());
 setSlashGetExpressionLabelFn(getExpressionLabel);
 setRenderProfileSelectorFn(renderProfileSelector);
 setSlashRenderRulesListFn(() => renderRulesList());
+setSlashRenderCharacterAssignmentsFn(() => renderCharacterAssignments());
 
 // ============================================================================
 // Fallback Expression Picker
@@ -252,6 +267,9 @@ async function addSettings() {
     $(document).on('click', '.rule_delete_btn', onClickDeleteRule);
     
     $(document).on('change', '.character_profile_select', onCharacterProfileChanged);
+    $(document).on('change', '.character_expression_set_select', onCharacterExpressionSetChanged);
+    $(document).on('click', '.expression_set_add', onExpressionSetAdd);
+    $(document).on('click', '.expression_set_remove', onExpressionSetRemove);
     
     // Insight panel toggle - supports both old 'debugMode' and new 'insightMode' settings
     const insightModeEnabled = settings.insightMode ?? settings.debugMode ?? false;
@@ -275,6 +293,142 @@ async function addSettings() {
     renderProfileSelector();
     renderRulesList();
     renderCharacterAssignments();
+}
+
+// ============================================================================
+// Wand Menu Integration
+// ============================================================================
+
+/**
+ * Adds the expression set button to the wand menu
+ */
+async function addWandButton() {
+    try {
+        // Check if the wand menu exists (it may not in all ST versions)
+        const extensionsMenu = $('#extensionsMenu');
+        if (extensionsMenu.length === 0) {
+            console.debug('Expressions+: Wand menu not found, skipping wand integration');
+            return;
+        }
+
+        // Load the button template
+        const buttonHtml = await renderExtensionTemplateAsync(MODULE_NAME, 'templates/wand-button');
+        const dropdownHtml = await renderExtensionTemplateAsync(MODULE_NAME, 'templates/wand-dropdown');
+
+        // Add our container if it doesn't exist, or append to existing
+        let container = $('#expressions_plus_wand_container');
+        if (container.length === 0) {
+            extensionsMenu.append('<div id="expressions_plus_wand_container" class="extension_container"></div>');
+            container = $('#expressions_plus_wand_container');
+        }
+
+        container.append(buttonHtml);
+        $(document.body).append(dropdownHtml);
+
+        const button = $('#expressions_plus_wand');
+        const dropdown = $('#expressions_plus_wand_dropdown');
+        dropdown.hide();
+
+        // Toggle dropdown on button click
+        button.on('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (dropdown.is(':visible')) {
+                dropdown.fadeOut(200);
+                return;
+            }
+
+            // Position dropdown near button
+            const buttonPos = button.offset();
+            dropdown.css({
+                position: 'absolute',
+                left: buttonPos.left,
+                bottom: $(window).height() - buttonPos.top + 5,
+            });
+
+            // Load expression sets for current character
+            loadWandDropdownSets();
+            dropdown.fadeIn(200);
+        });
+
+        // Close dropdown when clicking elsewhere
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#expressions_plus_wand, #expressions_plus_wand_dropdown').length) {
+                dropdown.fadeOut(200);
+            }
+        });
+
+        // Handle set selection
+        $(document).on('click', '.expressions_plus_wand_set_item', async function() {
+            const setFolder = String($(this).data('set-folder') || '');
+            const setName = $(this).data('set-name');
+            
+            const currentMessage = getLastCharacterMessage();
+            const characterId = getFolderNameByMessage(currentMessage);
+            
+            if (characterId) {
+                setCharacterExpressionSet(characterId, setFolder);
+                clearSpriteCache();
+                saveSettingsDebounced();
+                
+                // Refresh the character assignments UI
+                renderCharacterAssignments();
+                
+                // Dispatch event to trigger refresh
+                dispatchExpressionSetChanged(characterId, setFolder);
+                
+                // Show toast
+                /** @type {any} */
+                const toast = window.toastr;
+                toast.success(`Expression set changed to: ${setName}`);
+            }
+            
+            dropdown.fadeOut(200);
+        });
+
+        console.debug('Expressions+: Wand menu button added');
+    } catch (error) {
+        console.error('Expressions+: Failed to add wand button:', error);
+    }
+}
+
+/**
+ * Loads available expression sets into the wand dropdown
+ */
+function loadWandDropdownSets() {
+    const dropdown = $('#expressions_plus_wand_dropdown ul');
+    const currentMessage = getLastCharacterMessage();
+    const characterId = getFolderNameByMessage(currentMessage);
+    
+    if (!characterId) {
+        dropdown.html('<span>Switch expression set to:</span><li class="list-group-item">No character selected</li>');
+        return;
+    }
+    
+    try {
+        // getExpressionSets is now synchronous - reads from settings
+        const sets = getExpressionSets(characterId);
+        const currentSet = getCharacterExpressionSet(characterId);
+        
+        let html = '<span>Switch expression set to:</span>';
+        
+        if (sets.length === 0) {
+            html += '<li class="list-group-item">No expression sets configured</li>';
+        } else {
+            for (const set of sets) {
+                const isActive = set.folder === currentSet;
+                const activeClass = isActive ? 'expressions_plus_wand_set_active' : '';
+                const activeIcon = isActive ? '<i class="fa-solid fa-check"></i> ' : '';
+                html += `<li class="list-group-item expressions_plus_wand_set_item ${activeClass}" data-set-folder="${set.folder}" data-set-name="${set.name}">${activeIcon}${set.name}</li>`;
+            }
+        }
+        
+        dropdown.html(html);
+    } catch (error) {
+        console.error('Expressions+: Error loading expression sets:', error);
+        dropdown.html('<span>Switch expression set to:</span><li class="list-group-item">Error loading sets</li>');
+    }
 }
 
 function addExpressionImage() {
@@ -305,6 +459,7 @@ function addVisualNovelMode() {
     addExpressionImage();
     addVisualNovelMode();
     await addSettings();
+    await addWandButton();
     registerSlashCommands();
     
     const wrapper = new ModuleWorkerWrapper(moduleWorker);
@@ -317,6 +472,7 @@ function addVisualNovelMode() {
     eventSource.on(event_types.CHAT_CHANGED, () => {
         removeExpression();
         clearSpriteCache();
+        clearExpressionSetsCache();
         Object.keys(lastExpression).forEach(k => delete lastExpression[k]);
 
         let imgElement = document.getElementById('expression-plus-image');
@@ -336,6 +492,24 @@ function addVisualNovelMode() {
 
     eventSource.on(event_types.MOVABLE_PANELS_RESET, updateVisualNovelModeDebounced);
     eventSource.on(event_types.GROUP_UPDATED, updateVisualNovelModeDebounced);
+
+    // Listen for expression set changes to refresh the sprite immediately
+    window.addEventListener('expressionSetChanged', async (event) => {
+        const { characterId, expressionSet } = /** @type {CustomEvent} */ (event).detail;
+        console.debug('Expressions+: Expression set changed', { characterId, expressionSet });
+        
+        // Get the last known expression for this character to re-display it with the new set
+        const baseCharacterName = characterId.split('/')[0];
+        const currentExpression = lastExpression[baseCharacterName] || 'neutral';
+        
+        // Build the new sprite folder name with the expression set
+        const spriteFolderName = expressionSet 
+            ? `${characterId}/${expressionSet}`
+            : characterId;
+        
+        // Force refresh the sprite
+        await sendExpressionCall(spriteFolderName, currentExpression, { force: true });
+    });
 
     console.log('Expressions+ extension loaded');
 })();

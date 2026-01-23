@@ -107,3 +107,17 @@ export async function getExpressionLabel(text) {
     const result = selectExpression(scores);
     return result.expression;
 }
+
+// ============================================================================
+// Expression Sets API - Re-exported from expression-sets.js
+// ============================================================================
+
+export { 
+    getExpressionSets,
+    addExpressionSet,
+    removeExpressionSet,
+    validateExpressionSetFolder,
+    getCharacterExpressionSet,
+    setCharacterExpressionSet,
+    dispatchExpressionSetChanged
+} from './expression-sets.js';

@@ -31,6 +31,9 @@ export let lastClassificationScores = null;
 /** @type {boolean} Whether insight panel is visible */
 export let insightPanelVisible = false;
 
+/** @type {{[characterName: string]: import('./constants.js').ExpressionSet[]}} Cached expression sets per character */
+export let expressionSetsCache = {};
+
 // ============================================================================
 // State Setters (for controlled mutation from other modules)
 // ============================================================================
@@ -110,4 +113,24 @@ export function setLastClassificationScores(value) {
  */
 export function setInsightPanelVisible(value) {
     insightPanelVisible = value;
+}
+
+/**
+ * Sets or clears expression sets cache for a character
+ * @param {string} key 
+ * @param {import('./constants.js').ExpressionSet[]|undefined} value 
+ */
+export function setExpressionSetsCache(key, value) {
+    if (value === undefined) {
+        delete expressionSetsCache[key];
+    } else {
+        expressionSetsCache[key] = value;
+    }
+}
+
+/**
+ * Clears the entire expression sets cache
+ */
+export function clearExpressionSetsCache() {
+    expressionSetsCache = {};
 }
