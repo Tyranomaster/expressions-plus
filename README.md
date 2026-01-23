@@ -1,10 +1,23 @@
 # Expressions+ Extension for SillyTavern
 
-All the functionality of SillyTavern's built-in Expressions extension, **PLUS** advanced customization features like expression rules, profiles, and real-time insight into emotion classification.
+All the functionality of SillyTavern's built-in Expressions extension (local classification option), **PLUS** advanced customization features like expression rules, profiles, and real-time insight into emotion classification.
 
 ## What's New in Expressions+
 
-### 🎭 Custom Expression Rules
+### Local Classification Only
+
+Expressions+ uses exclusively the **Local** classification API, which leverages a built-in transformers.js model for emotion detection. This enables the extension to work with the full vector output from the classifier, allowing for:
+
+- Advanced rule-based expression matching
+- Multi-emotion combination detection
+- Fine-grained threshold controls
+- Real-time confidence score visualization
+
+The local model downloads automatically on first use (~50MB) and runs entirely in your browser.
+
+> **First-Time Setup:** The first time you receive a message after installing the extension, there may be a brief delay (10-30 seconds depending on your connection) while the classification model downloads from Hugging Face. Subsequent classifications will be nearly instant as the model is cached locally.
+
+### Custom Expression Rules
 
 Go beyond simple 1:1 emotion-to-sprite mapping with powerful rule types:
 
@@ -27,7 +40,7 @@ Go beyond simple 1:1 emotion-to-sprite mapping with powerful rule types:
 4. Set max difference to 25%
 5. Add a `bittersweet.png` sprite
 
-### 📋 Profile System
+### Profile System
 
 Organize your rules into reusable profiles:
 
@@ -36,14 +49,14 @@ Organize your rules into reusable profiles:
 - Export and import profiles to share with others
 - Default profile includes all 28 base emotions from the classifier
 
-### 🔍 Insight Panel
+### Insight Panel
 
 A draggable floating panel that shows real-time classification data:
 
 - Top 5 emotion scores with visual bars
 - Currently selected expression
 - Whether a custom rule was triggered
-- Normalized confidence scores
+- Normalized confidence scores (We use a custom normalization rule for emotion selection:(total score*((emotion rule count + 1) / 2)))
 
 Perfect for debugging your custom rules or understanding how the classifier interprets messages.
 
@@ -56,7 +69,7 @@ Perfect for debugging your custom rules or understanding how the classifier inte
 3. Paste this URL into the input field:
 
    ```none
-   https://github.com/YOUR_USERNAME/expressions-plus
+   https://github.com/tyranomaster/expressions-plus
    ```
 
 4. Click **Save** and wait for the extension to download
@@ -72,8 +85,7 @@ Perfect for debugging your custom rules or understanding how the classifier inte
 
 1. Open SillyTavern and go to Extensions panel
 2. Find "Expressions+" in the extension list
-3. Select your preferred Classification API
-4. Open a chat with a character that has sprite images
+3. The local classification model will download automatically on first use
 
 ### Creating Custom Rules
 
@@ -97,38 +109,11 @@ Expand the "Character Profile Assignments" section to assign specific profiles t
 
 ---
 
-## Troubleshooting
-
-### Sprites not showing
-
-- Ensure sprites are in the correct folder
-- Check that sprite filenames match emotion/rule names (case-insensitive)
-- Verify the file format is supported (PNG, GIF, WebP)
-
-### Local classification not working
-
-- The model downloads automatically on first use (~50MB)
-- Check the browser console for download progress
-- Ensure you have internet connectivity for the initial download
-
-### Insight panel position stuck
-
-- Open browser console (F12) and run:
-
-  ```javascript
-  delete power_user.movingUIState.expressions_plus_insight_panel;
-  saveSettingsDebounced();
-  ```
-
-- Refresh the page
-
----
-
 ## Inherited Features (from Built-in Expressions)
 
 Expressions+ includes all functionality from SillyTavern's built-in Expressions extension:
 
-### 🖼️ Sprite Management
+### Sprite Management
 
 - Automatic emotion detection from character messages
 - Multiple sprites per expression (randomly selected)
@@ -136,13 +121,6 @@ Expressions+ includes all functionality from SillyTavern's built-in Expressions 
 - Visual Novel mode support for group chats
 - Custom expression uploads
 - Fallback/default expression support
-
-### 🤖 Multiple Classification APIs
-
-- **Local** - Uses the built-in transformers.js model (downloads automatically on first use)
-- **LLM** - Uses your main chat API for classification
-- **WebLLM** - Uses the WebLLM browser extension
-- **Extras** - Legacy SillyTavern Extras API (deprecated)
 
 ### Default Emotions
 
@@ -154,27 +132,14 @@ The local classifier model recognizes 28 emotions:
 - love, nervousness, optimism, pride, realization, relief
 - remorse, sadness, surprise, neutral
 
-### Sprite Folder Structure
-
-Sprites should be placed in:
-
-```none
-SillyTavern/public/characters/[CharacterName]/expressions/
-```
-
-Or for group chats / shared sprites:
-
-```none
-SillyTavern/public/img/sprites/[SpriteFolderName]/
-```
-
-Supported formats: PNG, GIF, WebP
-
 ### Slash Commands
 
-- `/classify [text]` - Classify text and return the emotion
-- `/set-expression [expression]` - Manually set an expression
-- `/reset-expression` - Reset to automatic expression detection
+- `/explus-classify [text]` - Classify text and return the detected emotion label
+- `/explus-set [expression]` - Force set a specific expression for the current character (alias: `/exp-set`)
+- `/explus-profile` - Manage expression profiles:
+  - `/explus-profile action=list` - List all available profiles
+  - `/explus-profile action=get` - Get the current active profile name
+  - `/explus-profile action=set [profile name]` - Switch to a different profile
 
 ---
 

@@ -18,7 +18,7 @@ const toast = window.toastr;
 
 import { getRequestHeaders, saveSettingsDebounced } from '../../../../../script.js';
 
-import { EXPRESSION_API, OPTION_NO_FALLBACK, OPTION_EMOJI_FALLBACK } from './constants.js';
+import { OPTION_NO_FALLBACK, OPTION_EMOJI_FALLBACK } from './constants.js';
 import { spriteCache } from './state.js';
 import { getSettings } from './settings.js';
 import { getSpriteFolderName, getLastCharacterMessage } from './sprites.js';
@@ -47,18 +47,6 @@ export function setRenderRulesListFn(fn) {
 // ============================================================================
 // UI Event Handlers
 // ============================================================================
-
-/**
- * Handles API selection change
- */
-export function onApiChanged() {
-    const settings = getSettings();
-    settings.api = Number($('#expressions_plus_api').val());
-    saveSettingsDebounced();
-    
-    $('.expressions_plus_llm_prompt_block').toggle([EXPRESSION_API.llm, EXPRESSION_API.webllm].includes(settings.api));
-    $('.expressions_plus_prompt_type_block').toggle(settings.api === EXPRESSION_API.llm);
-}
 
 /**
  * Handles fallback expression change

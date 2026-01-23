@@ -22,34 +22,6 @@
 
             <hr>
 
-            <!-- API Settings -->
-            <div class="flex-container flexFlowColumn">
-                <label for="expressions_plus_api">Classifier API</label>
-                <select id="expressions_plus_api" class="text_pole">
-                    <option value="99">[ None ]</option>
-                    <option value="0">Local</option>
-                    <option value="1">Extras (deprecated)</option>
-                    <option value="2">Main API (LLM)</option>
-                    <option value="3">WebLLM Extension</option>
-                </select>
-            </div>
-
-            <!-- LLM Settings -->
-            <div class="expressions_plus_llm_prompt_block flex-container flexFlowColumn marginTop5">
-                <label for="expressions_plus_llm_prompt">LLM Prompt</label>
-                <textarea id="expressions_plus_llm_prompt" class="text_pole textarea_compact" rows="2" placeholder="Use {{labels}} macro"></textarea>
-                <div class="flex-container marginTop5">
-                    <label class="checkbox_label">
-                        <input type="radio" name="expressions_plus_prompt_type" value="raw">
-                        <span>Limited Context</span>
-                    </label>
-                    <label class="checkbox_label">
-                        <input type="radio" name="expressions_plus_prompt_type" value="full">
-                        <span>Full Context</span>
-                    </label>
-                </div>
-            </div>
-
             <!-- Fallback Expression -->
             <div class="flex-container flexFlowColumn marginTop5">
                 <label for="expressions_plus_fallback">Default / Fallback Expression</label>

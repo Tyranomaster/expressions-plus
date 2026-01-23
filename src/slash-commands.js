@@ -79,6 +79,7 @@ export function registerSlashCommands() {
             const spriteFolderName = getSpriteFolderName(currentLastMessage, currentLastMessage?.name);
             
             await sendExpressionCall(spriteFolderName, searchTerm, { force: true });
+            toast.success(`Expression set to: ${searchTerm}`);
             return searchTerm;
         },
         namedArgumentList: [
@@ -118,6 +119,7 @@ export function registerSlashCommands() {
 
             const label = await getExpressionLabel(text);
             console.debug(`Expressions+ classification result for "${text}": ${label}`);
+            toast.info(`Classification result: ${label}`);
             return label;
         },
         unnamedArgumentList: [
@@ -140,10 +142,16 @@ export function registerSlashCommands() {
             const value = String(valueArg || '');
             
             switch (action) {
-                case 'list':
-                    return getProfiles().map(p => p.name).join(', ');
-                case 'get':
-                    return getActiveProfile().name;
+                case 'list': {
+                    const profiles = getProfiles().map(p => p.name).join(', ');
+                    toast.info(`Available profiles: ${profiles}`);
+                    return profiles;
+                }
+                case 'get': {
+                    const activeProfile = getActiveProfile().name;
+                    toast.info(`Active profile: ${activeProfile}`);
+                    return activeProfile;
+                }
                 case 'set': {
                     const profile = getProfiles().find(p => p.name.toLowerCase() === value.toLowerCase());
                     if (profile) {
@@ -155,13 +163,17 @@ export function registerSlashCommands() {
                         if (renderRulesList) {
                             renderRulesList();
                         }
+                        toast.success(`Profile changed to: ${profile.name}`);
                         return profile.name;
                     }
                     toast.error(`Profile "${value}" not found`);
                     return '';
                 }
-                default:
-                    return getActiveProfile().name;
+                default: {
+                    const defaultProfile = getActiveProfile().name;
+                    toast.info(`Active profile: ${defaultProfile}`);
+                    return defaultProfile;
+                }
             }
         },
         namedArgumentList: [

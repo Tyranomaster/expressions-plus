@@ -7,11 +7,9 @@ import { extension_settings } from '../../../../extensions.js';
 import {
     SETTINGS_KEY,
     DEFAULT_FALLBACK_EXPRESSION,
-    DEFAULT_LLM_PROMPT,
     DEFAULT_EXPRESSIONS,
     DEFAULT_PROFILE_NAME,
     EXPRESSION_API,
-    PROMPT_TYPE,
     RULE_TYPE,
 } from './constants.js';
 
@@ -53,8 +51,6 @@ export function getDefaultSettings() {
         allowMultiple: true,
         rerollIfSame: false,
         filterAvailable: false,
-        llmPrompt: DEFAULT_LLM_PROMPT,
-        promptType: PROMPT_TYPE.raw,
         fallback_expression: DEFAULT_FALLBACK_EXPRESSION,
         showDefault: false,
         custom: [],

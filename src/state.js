@@ -19,9 +19,6 @@ export let lastMessage = null;
 /** @type {{[characterKey: string]: import('./constants.js').Expression[]}} Sprite cache by character */
 export let spriteCache = {};
 
-/** @type {boolean} Whether an API call is in progress */
-export let inApiCall = false;
-
 /** @type {number} Timestamp of last server response */
 export let lastServerResponseTime = 0;
 
@@ -80,14 +77,6 @@ export function setSpriteCache(key, value) {
  */
 export function clearSpriteCache() {
     spriteCache = {};
-}
-
-/**
- * Sets the API call in progress flag
- * @param {boolean} value 
- */
-export function setInApiCall(value) {
-    inApiCall = value;
 }
 
 /**
