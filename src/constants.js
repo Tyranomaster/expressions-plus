@@ -11,7 +11,6 @@ export const SETTINGS_KEY = 'expressions-plus';
 export const UPDATE_INTERVAL = 2000;
 export const STREAMING_UPDATE_INTERVAL = 10000;
 export const DEFAULT_FALLBACK_EXPRESSION = 'joy';
-export const DEFAULT_LLM_PROMPT = 'Ignore previous instructions. Classify the emotion of the last message. Output just one word, e.g. "joy" or "anger". Choose only one of the following labels: {{labels}}';
 
 /** @type {string[]} Default emotion labels from the classifier model */
 export const DEFAULT_EXPRESSIONS = [
@@ -30,16 +29,6 @@ export const DEFAULT_PROFILE_NAME = 'Default';
 /** @enum {number} */
 export const EXPRESSION_API = {
     local: 0,
-    extras: 1,
-    llm: 2,
-    webllm: 3,
-    none: 99,
-};
-
-/** @enum {string} */
-export const PROMPT_TYPE = {
-    raw: 'raw',
-    full: 'full',
 };
 
 /**

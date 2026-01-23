@@ -3,20 +3,17 @@
  */
 
 import { getContext } from '../../../../extensions.js';
-import { modules } from '../../../../extensions.js';
 
-import { EXPRESSION_API, STREAMING_UPDATE_INTERVAL } from './constants.js';
+import { STREAMING_UPDATE_INTERVAL } from './constants.js';
 import {
     expressionsList,
     lastCharacter,
     lastMessage,
     spriteCache,
-    inApiCall,
     lastServerResponseTime,
     setExpressionsList,
     setLastCharacter,
     setLastMessage,
-    setInApiCall,
     setLastServerResponseTime,
     clearSpriteCache,
 } from './state.js';
@@ -106,37 +103,23 @@ export async function moduleWorker({ newChat = false } = {}) {
     }
 
     const offlineMode = $('.expressions_plus_settings .offline_mode');
-    if (!modules.includes('classify') && settings.api == EXPRESSION_API.extras) {
-        $('#expressions_plus_open_chat').show();
-        $('#expressions_plus_no_chat').hide();
-        offlineMode.css('display', 'block');
-        setLastCharacter(context.groupId || context.characterId);
-
-        if (context.groupId && validateImages) {
+    offlineMode.css('display', 'none');
+    
+    if (offlineMode.is(':visible')) {
+        setExpressionsList(null);
+        clearSpriteCache();
+        if (getExpressionsList) {
+            setExpressionsList(await getExpressionsList());
+        }
+        if (validateImages) {
             await validateImages(spriteFolderName, true);
-            await forceUpdateVisualNovelMode();
         }
+        await forceUpdateVisualNovelMode();
+    }
 
-        return;
-    } else {
-        if (offlineMode.is(':visible')) {
-            setExpressionsList(null);
-            clearSpriteCache();
-            if (getExpressionsList) {
-                setExpressionsList(await getExpressionsList());
-            }
-            if (validateImages) {
-                await validateImages(spriteFolderName, true);
-            }
-            await forceUpdateVisualNovelMode();
-        }
-
-        if (context.groupId && !Array.isArray(spriteCache[spriteFolderName]) && validateImages) {
-            await validateImages(spriteFolderName, true);
-            await forceUpdateVisualNovelMode();
-        }
-
-        offlineMode.css('display', 'none');
+    if (context.groupId && !Array.isArray(spriteCache[spriteFolderName]) && validateImages) {
+        await validateImages(spriteFolderName, true);
+        await forceUpdateVisualNovelMode();
     }
 
     if (context.groupId && vnMode && newChat) {
@@ -151,15 +134,6 @@ export async function moduleWorker({ newChat = false } = {}) {
 
     if (!lastMessageChanged) return;
 
-    if (settings.api === EXPRESSION_API.llm && context.streamingProcessor && !context.streamingProcessor.isFinished) {
-        return;
-    }
-
-    if (inApiCall) {
-        console.debug('Expressions+ Classification API is busy');
-        return;
-    }
-
     if (!context.groupId && context.streamingProcessor && !context.streamingProcessor.isFinished) {
         const now = Date.now();
         const timeSinceLastServerResponse = now - lastServerResponseTime;
@@ -170,7 +144,6 @@ export async function moduleWorker({ newChat = false } = {}) {
     }
 
     try {
-        setInApiCall(true);
         let expression = null;
         if (getExpressionLabel) {
             expression = await getExpressionLabel(currentLastMessage.mes);
@@ -190,7 +163,6 @@ export async function moduleWorker({ newChat = false } = {}) {
     } catch (error) {
         console.error(error);
     } finally {
-        setInApiCall(false);
         setLastCharacter(context.groupId || context.characterId);
         setLastMessage(currentLastMessage.mes);
         setLastServerResponseTime(Date.now());

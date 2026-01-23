@@ -3,128 +3,41 @@
  * Advanced expression system with customizable emotion rules, profiles, and complex emotion detection.
  */
 
-/* global toastr */
-
-/**
- * @typedef {Object} ToastrLib
- * @property {function(string, string=, Object=): void} error
- * @property {function(string, string=, Object=): void} success  
- * @property {function(string, string=, Object=): void} warning
- * @property {function(string, string=, Object=): void} info
- */
-
-/** @type {ToastrLib} */
-// @ts-ignore - toastr is a global library
-const toast = window.toastr;
-
-import { Fuse } from '../../../../lib.js';
-import { characters, eventSource, event_types, generateQuietPrompt, generateRaw, getRequestHeaders, online_status, saveSettingsDebounced, substituteParams, substituteParamsExtended, system_message_types, this_chid } from '../../../../script.js';
-import { dragElement, isMobile } from '../../../RossAscends-mods.js';
-import { getContext, getApiUrl, modules, extension_settings, ModuleWorkerWrapper, doExtrasFetch, renderExtensionTemplateAsync } from '../../../extensions.js';
-import { loadMovingUIState, power_user } from '../../../power-user.js';
-import { onlyUnique, debounce, getCharaFilename, trimToEndSentence, trimToStartSentence, waitUntilCondition, findChar, isFalseBoolean } from '../../../utils.js';
-import { hideMutedSprites, selected_group } from '../../../group-chats.js';
-import { isJsonSchemaSupported } from '../../../textgen-settings.js';
-import { debounce_timeout } from '../../../constants.js';
-import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
-import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
-import { ARGUMENT_TYPE, SlashCommandArgument, SlashCommandNamedArgument } from '../../../slash-commands/SlashCommandArgument.js';
-import { SlashCommandEnumValue, enumTypes } from '../../../slash-commands/SlashCommandEnumValue.js';
-import { commonEnumProviders } from '../../../slash-commands/SlashCommandCommonEnumsProvider.js';
-import { slashCommandReturnHelper } from '../../../slash-commands/SlashCommandReturnHelper.js';
-import { generateWebLlmChatPrompt, isWebLlmSupported } from '../../shared.js';
-import { Popup, POPUP_RESULT } from '../../../popup.js';
-import { t } from '../../../i18n.js';
-import { removeReasoningFromString } from '../../../reasoning.js';
+import { eventSource, event_types, saveSettingsDebounced } from '../../../../script.js';
+import { dragElement } from '../../../RossAscends-mods.js';
+import { ModuleWorkerWrapper, renderExtensionTemplateAsync } from '../../../extensions.js';
+import { loadMovingUIState } from '../../../power-user.js';
 
 // Import from local modules
 import {
     MODULE_NAME,
-    SETTINGS_KEY,
     UPDATE_INTERVAL,
-    STREAMING_UPDATE_INTERVAL,
-    DEFAULT_FALLBACK_EXPRESSION,
-    DEFAULT_LLM_PROMPT,
-    DEFAULT_EXPRESSIONS,
     OPTION_NO_FALLBACK,
     OPTION_EMOJI_FALLBACK,
-    RESET_SPRITE_LABEL,
-    DEFAULT_PROFILE_NAME,
-    EXPRESSION_API,
-    PROMPT_TYPE,
-    RULE_TYPE,
 } from './src/constants.js';
 
 import {
-    expressionsList,
-    lastCharacter,
-    lastMessage,
-    spriteCache,
-    inApiCall,
-    lastServerResponseTime,
     lastExpression,
-    lastClassificationScores,
     insightPanelVisible,
-    setExpressionsList,
-    setLastCharacter,
-    setLastMessage,
-    setSpriteCache,
     clearSpriteCache,
-    setInApiCall,
-    setLastServerResponseTime,
-    setLastExpressionForCharacter,
-    setLastClassificationScores,
     setInsightPanelVisible,
 } from './src/state.js';
 
 import {
-    getDefaultSettings,
-    createDefaultProfile,
     getSettings,
     migrateSettings,
 } from './src/settings.js';
 
 import {
-    getProfiles,
-    getProfileById,
-    getActiveProfile,
-    createProfile,
-    deleteProfile,
-    exportProfile,
-    importProfile,
-} from './src/profiles.js';
-
-import {
-    validateRuleName,
-    createRule,
-    updateRule,
-    deleteRule,
-} from './src/rules.js';
-
-import {
-    evaluateRule,
-    selectExpression,
-} from './src/classification.js';
-
-import {
     getClassificationScores,
     getExpressionLabel,
-    onTextGenSettingsReady,
-    setGetExpressionsListFn as setApiGetExpressionsListFn,
     setUpdateInsightPanelFn,
 } from './src/api.js';
 
 import {
-    getPlaceholderImage,
     isVisualNovelMode,
-    forceUpdateVisualNovelMode,
     updateVisualNovelModeDebounced,
-    getExpressionImageData,
-    getSpritesList,
     chooseSpriteForExpression,
-    getSpriteFolderName,
-    getFolderNameByMessage,
-    getLastCharacterMessage,
     validateImages as validateImagesBase,
     drawSpritesList as drawSpritesListBase,
     createListItemHtml,
@@ -134,10 +47,6 @@ import {
 
 import {
     removeExpression,
-    setImage,
-    setDefaultEmojiForImage,
-    setNoneForImage,
-    setExpression,
     sendExpressionCall,
     setValidateImagesFn,
     setUpdateVisualNovelModeFn as setDisplayUpdateVisualNovelModeFn,
@@ -170,7 +79,6 @@ import {
 } from './src/debug-panel.js';
 
 import {
-    onApiChanged,
     onFallbackChanged,
     onProfileChanged,
     onClickExpressionImage,
@@ -241,7 +149,6 @@ async function drawSpritesList(spriteFolderName, labels, sprites) {
 }
 
 // Wire up the module dependencies
-setApiGetExpressionsListFn(() => getExpressionsList());
 setUpdateInsightPanelFn((scores) => updateInsightPanel(scores));
 setSpritesGetExpressionsListFn(() => getExpressionsList());
 setSpritesUpdateVisualNovelModeFn((folder, expr) => updateVisualNovelMode(folder, expr));
@@ -273,64 +180,6 @@ setRulesGetExpressionsListFn(() => getExpressionsList());
 setSlashGetExpressionLabelFn(getExpressionLabel);
 setRenderProfileSelectorFn(renderProfileSelector);
 setSlashRenderRulesListFn(() => renderRulesList());
-
-// ============================================================================
-// Type Definitions (imported from constants.js, kept here for reference)
-// ============================================================================
-
-/**
- * @typedef {Object} EmotionScore
- * @property {string} label - The emotion label
- * @property {number} score - The emotion score (0-1)
- */
-
-/**
- * @typedef {Object} RuleCondition
- * @property {string} emotion - The emotion label to check
- * @property {number} [minScore] - Minimum score threshold
- * @property {number} [maxScore] - Maximum score threshold
- */
-
-/**
- * @typedef {Object} ExpressionRule
- * @property {string} id - Unique identifier for the rule
- * @property {string} name - Display name / sprite name for this expression
- * @property {RULE_TYPE} type - The type of rule
- * @property {RuleCondition[]} conditions - Array of conditions that must be met
- * @property {boolean} [enabled=true] - Whether this rule is active
- * @property {number} [maxDifference] - Max % difference between conditions (for near-equal)
- */
-
-/**
- * @typedef {Object} ExpressionProfile
- * @property {string} id - Unique identifier for the profile
- * @property {string} name - Display name for the profile
- * @property {ExpressionRule[]} rules - Array of custom expression rules
- * @property {string} fallbackExpression - Fallback expression if no rules match
- * @property {boolean} [isDefault=false] - Whether this is the default profile
- */
-
-/**
- * @typedef {Object} CharacterProfileAssignment
- * @property {string} characterId - Character avatar filename (without extension)
- * @property {string} profileId - Profile ID assigned to this character
- */
-
-/**
- * @typedef {Object} Expression
- * @property {string} label - The label of the expression
- * @property {ExpressionImage[]} files - One or more images to represent this expression
- */
-
-/**
- * @typedef {Object} ExpressionImage
- * @property {string} expression - The expression label
- * @property {boolean} [isCustom=false] - If the expression is added by user
- * @property {string} fileName - The filename with extension
- * @property {string} title - The title for the image
- * @property {string} imageSrc - The image source / full path
- * @property {'success' | 'additional' | 'failure' | 'default'} type - The type of the image
- */
 
 // ============================================================================
 // Fallback Expression Picker
@@ -390,19 +239,6 @@ async function addSettings() {
         saveSettingsDebounced();
     });
     
-    $('#expressions_plus_api').val(settings.api).on('change', onApiChanged);
-    
-    $('#expressions_plus_llm_prompt').val(settings.llmPrompt).on('input', function() {
-        settings.llmPrompt = $(this).val();
-        saveSettingsDebounced();
-    });
-    
-    $(`input[name="expressions_plus_prompt_type"][value="${settings.promptType}"]`).prop('checked', true);
-    $('input[name="expressions_plus_prompt_type"]').on('change', function() {
-        settings.promptType = $(this).val();
-        saveSettingsDebounced();
-    });
-    
     $('#expressions_plus_fallback').on('change', onFallbackChanged);
     $('#expressions_plus_profile_select').on('change', onProfileChanged);
     
@@ -433,10 +269,6 @@ async function addSettings() {
     $(document).on('click', '.expression_plus_list_item', onClickExpressionImage);
     $(document).on('click', '.expression_plus_list_upload', onClickExpressionUpload);
     $(document).on('click', '.expression_plus_list_delete', onClickExpressionDelete);
-
-    // Show/hide LLM options based on API
-    $('.expressions_plus_llm_prompt_block').toggle([EXPRESSION_API.llm, EXPRESSION_API.webllm].includes(settings.api));
-    $('.expressions_plus_prompt_type_block').toggle(settings.api === EXPRESSION_API.llm);
 
     // Initialize UI
     await renderFallbackExpressionPicker();
