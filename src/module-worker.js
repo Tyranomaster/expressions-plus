@@ -158,7 +158,6 @@ export async function moduleWorker({ newChat = false } = {}) {
         if (currentLastMessage.mes == '...' && expressionsList.includes(settings.fallback_expression)) {
             expression = settings.fallback_expression;
         }
-
         await sendExpressionCall(spriteFolderName, expression, { force, vnMode });
     } catch (error) {
         console.error(error);
@@ -168,3 +167,4 @@ export async function moduleWorker({ newChat = false } = {}) {
         setLastServerResponseTime(Date.now());
     }
 }
+
