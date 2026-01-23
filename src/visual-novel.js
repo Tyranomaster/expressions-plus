@@ -3,7 +3,7 @@
  */
 
 import { getContext } from '../../../../extensions.js';
-import { power_user } from '../../../../power-user.js';
+import { power_user, loadMovingUIState } from '../../../../power-user.js';
 import { onlyUnique } from '../../../../utils.js';
 import { hideMutedSprites } from '../../../../group-chats.js';
 import { dragElement } from '../../../../RossAscends-mods.js';
@@ -47,8 +47,10 @@ export function setGetExpressionLabelFn(fn) {
  */
 export async function updateVisualNovelMode(spriteFolderName, expression) {
     const vnContainer = $('#visual-novel-plus-wrapper');
+    
     await visualNovelRemoveInactive(vnContainer);
     const setSpritePromises = await visualNovelSetCharacterSprites(vnContainer, spriteFolderName, expression);
+    
     await visualNovelUpdateLayers(vnContainer);
     await Promise.allSettled(setSpritePromises);
     if (setSpritePromises.length > 0) {
@@ -184,6 +186,11 @@ async function getLastMessageSprite(avatar) {
 async function visualNovelUpdateLayers(container) {
     const context = getContext();
     const group = context.groups.find(x => x.id == context.groupId);
+    
+    if (!group) {
+        return;
+    }
+    
     const recentMessages = context.chat.map(x => x.original_avatar).filter(x => x).reverse().filter(onlyUnique);
     const filteredMembers = group.members.filter(x => !group.disabled_members.includes(x));
     
@@ -204,40 +211,84 @@ async function visualNovelUpdateLayers(container) {
         }
     });
 
+    const setLayerIndicesPromises = [];
     const containerWidth = container.width();
     const pivotalPoint = containerWidth * 0.5;
 
-    let images = Array.from($('#visual-novel-plus-wrapper .expression-plus-holder')).sort((a, b) => {
+    const sortFunction = (a, b) => {
         const avatarA = $(a).data('avatar');
         const avatarB = $(b).data('avatar');
         return filteredMembers.indexOf(avatarA) - filteredMembers.indexOf(avatarB);
+    };
+
+    let images = Array.from($('#visual-novel-plus-wrapper .expression-plus-holder')).sort(sortFunction);
+    
+    if (images.length === 0) {
+        return;
+    }
+    
+    let imagesWidth = [];
+
+    // Wait for images to load before measuring widths
+    for (const image of images) {
+        const $image = $(image);
+        // Ensure element is visible before measuring (but don't animate yet)
+        $image.show();
+        
+        const img = $image.find('img')[0];
+        if (img instanceof HTMLImageElement && !img.complete) {
+            await new Promise(resolve => img.addEventListener('load', resolve, { once: true }));
+        }
+    }
+
+    images.forEach((image) => {
+        const width = $(image).width();
+        imagesWidth.push(width);
     });
 
-    let imagesWidth = images.map(image => $(image).width());
     let totalWidth = imagesWidth.reduce((a, b) => a + b, 0);
     let currentPosition = pivotalPoint - (totalWidth / 2);
 
     if (totalWidth > containerWidth) {
         let totalOverlap = totalWidth - containerWidth;
-        let totalWidthWithoutWidest = totalWidth - Math.max(...imagesWidth);
+        let totalWidthWithoutWidest = imagesWidth.reduce((a, b) => a + b, 0) - Math.max(...imagesWidth);
         let overlaps = imagesWidth.map(width => (width / totalWidthWithoutWidest) * totalOverlap);
         imagesWidth = imagesWidth.map((width, index) => width - overlaps[index]);
         currentPosition = 0;
     }
 
-    for (let i = 0; i < images.length; i++) {
-        const element = $(images[i]);
+    images.forEach((current, index) => {
+        const element = $(current);
+        const elementID = element.attr('id');
+
+        // Skip repositioning of dragged elements
+        if (element.data('dragged') 
+            || (power_user.movingUIState[elementID] 
+                && (typeof power_user.movingUIState[elementID] === 'object') 
+                && Object.keys(power_user.movingUIState[elementID]).length > 0)) {
+            loadMovingUIState();
+            return;
+        }
+
         const avatar = element.data('avatar');
         const layerIndex = layerIndices.indexOf(avatar);
         element.css('z-index', layerIndex);
         element.show();
 
-        if (power_user.reduced_motion) {
-            element.css('left', currentPosition + 'px');
-        } else {
-            element.animate({ left: currentPosition + 'px' }, 500);
-        }
+        const promise = new Promise(resolve => {
+            if (power_user.reduced_motion) {
+                element.css('left', currentPosition + 'px');
+                requestAnimationFrame(() => resolve());
+            } else {
+                element.animate({ left: currentPosition + 'px' }, 500, () => {
+                    resolve();
+                });
+            }
+        });
 
-        currentPosition += imagesWidth[i];
-    }
+        currentPosition += imagesWidth[index];
+        setLayerIndicesPromises.push(promise);
+    });
+
+    await Promise.allSettled(setLayerIndicesPromises);
 }

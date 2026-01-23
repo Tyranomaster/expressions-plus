@@ -75,6 +75,7 @@ export async function moduleWorker({ newChat = false } = {}) {
 
     const vnMode = isVisualNovelMode();
     const vnWrapperVisible = $('#visual-novel-plus-wrapper').is(':visible');
+    console.debug('[VN-DEBUG] moduleWorker - vnMode:', vnMode, 'vnWrapperVisible:', vnWrapperVisible, 'groupId:', context.groupId);
 
     if (vnMode) {
         $('#expression-plus-wrapper').hide();
@@ -85,8 +86,10 @@ export async function moduleWorker({ newChat = false } = {}) {
     }
 
     const vnStateChanged = vnMode !== vnWrapperVisible;
+    console.debug('[VN-DEBUG] vnStateChanged:', vnStateChanged);
 
     if (vnStateChanged) {
+        console.debug('[VN-DEBUG] VN state changed, emptying wrapper');
         setLastMessage(null);
         $('#visual-novel-plus-wrapper').empty();
         $('#expression-plus-holder').css({ top: '', left: '', right: '', bottom: '', height: '', width: '', margin: '' });
@@ -159,6 +162,7 @@ export async function moduleWorker({ newChat = false } = {}) {
             expression = settings.fallback_expression;
         }
 
+        console.debug('[VN-DEBUG] About to call sendExpressionCall with vnMode:', vnMode, 'force:', force);
         await sendExpressionCall(spriteFolderName, expression, { force, vnMode });
     } catch (error) {
         console.error(error);
