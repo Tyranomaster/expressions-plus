@@ -2,8 +2,6 @@
  * Slash Commands for Expressions+
  */
 
-/* global toastr */
-
 /**
  * @typedef {Object} ToastrLib
  * @property {function(string, string=, Object=): void} error
@@ -38,7 +36,6 @@ import {
 } from './expression-sets.js';
 import { clearSpriteCache } from './state.js';
 
-// Forward declarations - will be set by index.js
 let getExpressionLabel = null;
 let renderProfileSelector = null;
 let renderRulesList = null;
@@ -122,7 +119,6 @@ export function registerSlashCommands() {
         returns: 'The set expression label.',
     }));
 
-    // Classify command
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'explus-classify',
         callback: async (_, textArg) => {
@@ -153,7 +149,6 @@ export function registerSlashCommands() {
         helpString: 'Performs emotion classification using Expressions+ rules.',
     }));
 
-    // Profile commands
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'explus-profile',
         callback: async (args, valueArg) => {
@@ -215,7 +210,6 @@ export function registerSlashCommands() {
         helpString: 'Manage Expressions+ profiles.',
     }));
 
-    // Expression Set command
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'explus-expressionset',
         aliases: ['exp-expressionset', 'explus-set-folder'],
@@ -224,7 +218,6 @@ export function registerSlashCommands() {
             const value = String(valueArg || '');
             const context = getContext();
             
-            // Get current character ID
             let characterId = '';
             if (args.character) {
                 characterId = String(args.character);
@@ -274,7 +267,6 @@ export function registerSlashCommands() {
                             renderCharacterAssignments();
                         }
                         
-                        // Dispatch event to trigger refresh
                         dispatchExpressionSetChanged(characterId, targetSet.folder);
                         
                         toast.success(`Expression set changed to: ${targetSet.name}`);

@@ -16,8 +16,10 @@ import {
     setLastMessage,
     setLastServerResponseTime,
     clearSpriteCache,
+    setCurrentSpriteFolderName,
 } from './state.js';
 import { getSettings } from './settings.js';
+import { fetchAndCacheFolderProfile } from './profiles.js';
 import { 
     isVisualNovelMode, 
     forceUpdateVisualNovelMode,
@@ -26,10 +28,10 @@ import {
 } from './sprites.js';
 import { removeExpression, sendExpressionCall } from './expression-display.js';
 
-// Forward declarations - will be set by index.js
 let validateImages = null;
 let getExpressionLabel = null;
 let getExpressionsList = null;
+let onFolderProfileUpdated = null;
 
 /**
  * Sets the validateImages function reference
@@ -53,6 +55,14 @@ export function setGetExpressionLabelFn(fn) {
  */
 export function setGetExpressionsListFn(fn) {
     getExpressionsList = fn;
+}
+
+/**
+ * Sets the callback to invoke after fetching/refreshing a folder profile.
+ * @param {Function} fn 
+ */
+export function setOnFolderProfileUpdatedFn(fn) {
+    onFolderProfileUpdated = fn;
 }
 
 // ============================================================================
@@ -94,6 +104,15 @@ export async function moduleWorker({ newChat = false } = {}) {
 
     const currentLastMessage = getLastCharacterMessage();
     let spriteFolderName = getSpriteFolderName(currentLastMessage, currentLastMessage.name);
+
+    setCurrentSpriteFolderName(spriteFolderName);
+
+    if (settings.prioritizeFolderProfiles) {
+        await fetchAndCacheFolderProfile(spriteFolderName);
+        if (onFolderProfileUpdated) {
+            onFolderProfileUpdated();
+        }
+    }
 
     if (Object.keys(spriteCache).length === 0) {
         if (validateImages) {

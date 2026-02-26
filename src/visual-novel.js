@@ -3,7 +3,7 @@
  */
 
 import { getContext } from '../../../../extensions.js';
-import { power_user, loadMovingUIState } from '../../../../power-user.js';
+import { power_user } from '../../../../power-user.js';
 import { onlyUnique } from '../../../../utils.js';
 import { hideMutedSprites } from '../../../../group-chats.js';
 import { dragElement } from '../../../../RossAscends-mods.js';
@@ -16,7 +16,6 @@ import {
 } from './sprites.js';
 import { setImage } from './expression-display.js';
 
-// Forward declarations - will be set by index.js
 let validateImages = null;
 let getExpressionLabel = null;
 
@@ -229,10 +228,8 @@ async function visualNovelUpdateLayers(container) {
     
     let imagesWidth = [];
 
-    // Wait for images to load before measuring widths
     for (const image of images) {
         const $image = $(image);
-        // Ensure element is visible before measuring (but don't animate yet)
         $image.show();
         
         const img = $image.find('img')[0];
@@ -260,13 +257,13 @@ async function visualNovelUpdateLayers(container) {
     images.forEach((current, index) => {
         const element = $(current);
         const elementID = element.attr('id');
-
-        // Skip repositioning of dragged elements
         if (element.data('dragged') 
             || (power_user.movingUIState[elementID] 
                 && (typeof power_user.movingUIState[elementID] === 'object') 
                 && Object.keys(power_user.movingUIState[elementID]).length > 0)) {
-            loadMovingUIState();
+            if (power_user.movingUIState[elementID]) {
+                element.css(power_user.movingUIState[elementID]);
+            }
             return;
         }
 

@@ -1,0 +1,115 @@
+<div id="expressions_plus_analytics_dialog" class="analytics_dialog" style="display: none;">
+    <div class="analytics_dialog_overlay"></div>
+    <div class="analytics_dialog_content">
+        <div class="analytics_dialog_header">
+            <h3>Expression Analytics</h3>
+            <div class="analytics_dialog_close" title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </div>
+        </div>
+        
+        <div class="analytics_dialog_body">
+            <div class="analytics_filters">
+                <div class="analytics_filter_row">
+                    <div class="analytics_filter_item">
+                        <label for="analytics_max_difference">Max Difference:</label>
+                        <input type="range" id="analytics_max_difference" min="0" max="50" value="25" step="5">
+                        <span id="analytics_max_difference_value">25%</span>
+                    </div>
+                    
+                    <div class="analytics_filter_item">
+                        <label>Emotion Count:</label>
+                        <div class="analytics_emotion_count_options">
+                            <label class="radio_label">
+                                <input type="radio" name="analytics_emotion_count" value="2"> 2
+                            </label>
+                            <label class="radio_label">
+                                <input type="radio" name="analytics_emotion_count" value="3"> 3
+                            </label>
+                            <label class="radio_label">
+                                <input type="radio" name="analytics_emotion_count" value="both" checked> Both
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics_filter_item">
+                        <label for="analytics_min_occurrences">Min Occurrences:</label>
+                        <input type="number" id="analytics_min_occurrences" min="1" value="1" class="text_pole">
+                    </div>
+                    
+                    <div class="analytics_filter_item">
+                        <label for="analytics_min_score_diff">Min Score Diff %:</label>
+                        <input type="number" id="analytics_min_score_diff" min="0" max="100" value="0" step="0.5" class="text_pole" placeholder="0">
+                    </div>
+                </div>
+                
+                <div class="analytics_filter_actions">
+                    <button id="analytics_apply_filters" class="menu_button">
+                        <i class="fa-solid fa-filter"></i> Apply Filters
+                    </button>
+                </div>
+            </div>
+            
+            <div class="analytics_results_header">
+                <span>Results (sorted by frequency):</span>
+                <span id="analytics_total_count" class="analytics_count_badge">0 entries</span>
+            </div>
+            
+            <div id="analytics_results_list" class="analytics_results_list">
+                <div class="analytics_loading">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Loading...
+                </div>
+            </div>
+        </div>
+        
+        <div class="analytics_dialog_footer">
+            <div class="analytics_footer_info">
+                <span id="analytics_filtered_count">Showing 0 combinations</span>
+            </div>
+            <div class="analytics_footer_actions">
+                <button id="analytics_export_btn" class="menu_button" title="Export all data to JSON file">
+                    <i class="fa-solid fa-file-export"></i> Export
+                </button>
+                <button id="analytics_import_btn" class="menu_button" title="Import data from JSON file">
+                    <i class="fa-solid fa-file-import"></i> Import
+                </button>
+                <button id="analytics_clear_btn" class="menu_button menu_button_danger" title="Clear all analytics data">
+                    <i class="fa-solid fa-trash"></i> Clear Data
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="analytics_import_file" accept=".json" style="display: none;">
+</div>
+
+<template id="analytics_combination_template">
+    <div class="analytics_combination_item">
+        <div class="analytics_combination_header">
+            <div class="analytics_combination_toggle">
+                <i class="fa-solid fa-chevron-right"></i>
+            </div>
+            <div class="analytics_combination_key"></div>
+            <div class="analytics_combination_badges">
+                <span class="analytics_count_badge"></span>
+                <span class="analytics_emotion_count_badge"></span>
+                <span class="analytics_diff_badge" title="Average score difference"></span>
+            </div>
+        </div>
+        <div class="analytics_combination_entries" style="display: none;">
+        </div>
+    </div>
+</template>
+
+<template id="analytics_entry_template">
+    <div class="analytics_entry_item">
+        <div class="analytics_entry_scores">
+            <span class="analytics_entry_combo_score" title="Combination score"></span>
+            <span class="analytics_entry_vs">vs</span>
+            <span class="analytics_entry_chosen_score" title="Chosen expression score"></span>
+            <span class="analytics_entry_chosen_name"></span>
+        </div>
+        <div class="analytics_entry_text" title="Classified text"></div>
+        <div class="analytics_entry_timestamp"></div>
+    </div>
+</template>

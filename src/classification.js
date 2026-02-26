@@ -3,7 +3,9 @@
  */
 
 import { RULE_TYPE, DEFAULT_FALLBACK_EXPRESSION } from './constants.js';
-import { getActiveProfile } from './profiles.js';
+import { getActiveProfileWithFolderOverride } from './profiles.js';
+import { getSettings } from './settings.js';
+import { currentSpriteFolderName } from './state.js';
 
 // ============================================================================
 // Expression Classification & Scoring
@@ -84,25 +86,20 @@ export function evaluateRule(rule, scores) {
                 totalScore += emotionScore;
             }
             
-            // Use average score for normalization
             const avgScore = totalScore / rule.conditions.length;
             return { matched: true, normalizedScore: avgScore, rawScore: totalScore };
         }
 
         case RULE_TYPE.COMBINATION: {
-            // Combination: Multiple emotions must be near-equal in value (all must match - AND logic)
             const conditionScores = rule.conditions.map(condition => ({
                 emotion: condition.emotion,
                 score: scoreMap.get(condition.emotion) ?? 0,
             }));
             
-            // Find the highest score among the specified conditions
             const highestConditionScore = Math.max(...conditionScores.map(c => c.score));
             
-            // Use the rule-level maxDifference
             const maxDiffPercent = rule.maxDifference ?? 0.25;
             
-            // Check if all conditions are within the max difference percentage
             const conditionResults = conditionScores.map(c => {
                 if (highestConditionScore === 0) {
                     return { ...c, withinRange: false };
@@ -114,13 +111,11 @@ export function evaluateRule(rule, scores) {
                 };
             });
 
-            // All conditions must match (AND logic only)
             const matched = conditionResults.every(r => r.withinRange);
 
             if (matched) {
                 const totalScore = conditionResults.reduce((sum, r) => sum + r.score, 0);
                 const numConditions = conditionResults.length;
-                // Normalization: divide by (n+1)/2
                 const divisor = (numConditions + 1) / 2;
                 const normalizedScore = totalScore / divisor;
                 return { matched: true, normalizedScore, rawScore: totalScore };
@@ -209,7 +204,7 @@ export function evaluateRule(rule, scores) {
  * @returns {{expression: string, score: number, isCustom: boolean, ruleId: string|null}}
  */
 export function selectExpression(scores) {
-    const profile = getActiveProfile();
+    const profile = getActiveProfileWithFolderOverride(currentSpriteFolderName);
     
     if (!scores || scores.length === 0) {
         return { 
@@ -220,7 +215,6 @@ export function selectExpression(scores) {
         };
     }
 
-    // Evaluate all rules
     const ruleResults = profile.rules.map(rule => {
         const result = evaluateRule(rule, scores);
         return {
@@ -229,26 +223,36 @@ export function selectExpression(scores) {
         };
     });
 
-    // Filter matched rules and sort by normalized score (descending)
     const matchedRules = ruleResults
         .filter(r => r.matched)
         .sort((a, b) => {
-            // Sort by normalized score descending
             if (b.normalizedScore !== a.normalizedScore) {
                 return b.normalizedScore - a.normalizedScore;
             }
-            // Tie-breaker: prefer custom rules (non-SIMPLE) over base rules
             const aIsCustom = a.rule.type !== RULE_TYPE.SIMPLE;
             const bIsCustom = b.rule.type !== RULE_TYPE.SIMPLE;
             if (aIsCustom !== bIsCustom) {
                 return bIsCustom ? 1 : -1;
             }
-            // Further tie-breaker: more specific rules (more conditions) win
             return b.rule.conditions.length - a.rule.conditions.length;
         });
 
     if (matchedRules.length > 0) {
         const best = matchedRules[0];
+        
+        const settings = getSettings();
+        if (settings.lowConfidenceEnabled) {
+            const threshold = settings.lowConfidenceThreshold ?? 0.10;
+            if (best.normalizedScore < threshold) {
+                return {
+                    expression: settings.lowConfidenceExpression || 'neutral',
+                    score: best.normalizedScore,
+                    isCustom: false,
+                    ruleId: null,
+                };
+            }
+        }
+        
         return {
             expression: best.rule.name,
             score: best.normalizedScore,

@@ -32,7 +32,6 @@ const toast = window.toastr;
 export function validateRuleName(name, profileId, excludeRuleId = null) {
     const normalizedName = name.toLowerCase().trim();
     
-    // Check against base expressions
     if (DEFAULT_EXPRESSIONS.includes(normalizedName)) {
         // Only invalid if trying to create a non-simple rule with base name
         // Simple rules can use base names
@@ -42,7 +41,6 @@ export function validateRuleName(name, profileId, excludeRuleId = null) {
         };
     }
     
-    // Check against existing rules in this profile
     const profile = getProfileById(profileId);
     if (profile) {
         const existingRule = profile.rules.find(r => 
@@ -69,7 +67,11 @@ export function createRule(profileId, ruleData) {
     const profile = getProfileById(profileId);
     if (!profile) return null;
 
-    // Validate name
+    if (profile.isDefault) {
+        toast.error('Cannot modify rules in a built-in profile. Create a new profile to add custom rules.');
+        return null;
+    }
+
     const validation = validateRuleName(ruleData.name, profileId);
     if (!validation.valid) {
         toast.error(validation.message);
@@ -101,10 +103,14 @@ export function updateRule(profileId, ruleId, updates) {
     const profile = getProfileById(profileId);
     if (!profile) return false;
 
+    if (profile.isDefault) {
+        toast.error('Cannot modify rules in a built-in profile. Create a new profile to edit rules.');
+        return false;
+    }
+
     const ruleIndex = profile.rules.findIndex(r => r.id === ruleId);
     if (ruleIndex === -1) return false;
 
-    // Validate name if changed
     if (updates.name && updates.name !== profile.rules[ruleIndex].name) {
         const validation = validateRuleName(updates.name, profileId, ruleId);
         if (!validation.valid) {
@@ -128,7 +134,64 @@ export function deleteRule(profileId, ruleId) {
     const profile = getProfileById(profileId);
     if (!profile) return false;
 
+    if (profile.isDefault) {
+        toast.error('Cannot modify rules in a built-in profile. Create a new profile to delete rules.');
+        return false;
+    }
+
     profile.rules = profile.rules.filter(r => r.id !== ruleId);
+    saveSettingsDebounced();
+    return true;
+}
+
+/**
+ * Moves a rule to a new position within the profile's rules array
+ * @param {string} profileId 
+ * @param {string} ruleId - The rule to move
+ * @param {number} newIndex - The target index (among all rules)
+ * @returns {boolean}
+ */
+export function moveRule(profileId, ruleId, newIndex) {
+    const profile = getProfileById(profileId);
+    if (!profile) return false;
+
+    if (profile.isDefault) {
+        return false;
+    }
+
+    const oldIndex = profile.rules.findIndex(r => r.id === ruleId);
+    if (oldIndex === -1) return false;
+
+    const [rule] = profile.rules.splice(oldIndex, 1);
+    profile.rules.splice(newIndex, 0, rule);
+    saveSettingsDebounced();
+    return true;
+}
+
+/**
+ * Sorts custom rules (non-simple) alphabetically
+ * @param {string} profileId 
+ * @param {'asc'|'desc'} direction - Sort direction
+ * @returns {boolean}
+ */
+export function sortRules(profileId, direction = 'asc') {
+    const profile = getProfileById(profileId);
+    if (!profile) return false;
+
+    if (profile.isDefault) {
+        toast.error('Cannot modify rules in a built-in profile.');
+        return false;
+    }
+
+    const simpleRules = profile.rules.filter(r => r.type === 'simple' || r.type === RULE_TYPE.SIMPLE);
+    const customRules = profile.rules.filter(r => r.type !== 'simple' && r.type !== RULE_TYPE.SIMPLE);
+
+    customRules.sort((a, b) => {
+        const cmp = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        return direction === 'asc' ? cmp : -cmp;
+    });
+
+    profile.rules = [...customRules, ...simpleRules];
     saveSettingsDebounced();
     return true;
 }

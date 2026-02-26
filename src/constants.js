@@ -24,8 +24,15 @@ export const DEFAULT_EXPRESSIONS = [
 export const OPTION_NO_FALLBACK = '#none';
 export const OPTION_EMOJI_FALLBACK = '#emoji';
 export const RESET_SPRITE_LABEL = '#reset';
-export const DEFAULT_PROFILE_NAME = 'Default';
+export const DEFAULT_PROFILE_NAME = 'Default (Legacy)';
+export const DEFAULT_PROFILE_ID = 'default';
+export const DEFAULT_PLUS_PROFILE_ID = 'default_plus';
+export const DEFAULT_PLUS_PROFILE_NAME = 'Default +';
+export const DEFAULT_ACTIVE_PROFILE_ID = DEFAULT_PLUS_PROFILE_ID;
 export const DEFAULT_EXPRESSION_SET = ''; // Empty string represents base folder
+export const DEFAULT_PLUS_EXPRESSION_SET = 'default-plus';
+export const FOLDER_PROFILE_FILENAME = 'expressions-plus-profile.json';
+export const FOLDER_PROFILE_CACHE_TTL = 60000; // 60 seconds
 
 /** @enum {number} */
 export const EXPRESSION_API = {

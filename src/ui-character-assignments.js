@@ -2,8 +2,6 @@
  * Character Profile Assignment UI for Expressions+
  */
 
-/* global toastr */
-
 /**
  * @typedef {Object} ToastrLib
  * @property {function(string, string=, Object=): void} error
@@ -30,7 +28,7 @@ import {
     dispatchExpressionSetChanged
 } from './expression-sets.js';
 import { clearSpriteCache } from './state.js';
-import { DEFAULT_EXPRESSION_SET } from './constants.js';
+import { DEFAULT_EXPRESSION_SET, DEFAULT_PLUS_EXPRESSION_SET } from './constants.js';
 
 // ============================================================================
 // Character Profile Assignment UI
@@ -50,7 +48,6 @@ export async function renderCharacterAssignments() {
         `<option value="${p.id}">${p.name}</option>`
     ).join('');
 
-    // Get all characters
     const characters = context.characters || [];
     
     for (const char of characters) {
@@ -59,9 +56,8 @@ export async function renderCharacterAssignments() {
 
         const assignment = settings.characterAssignments.find(a => a.characterId === avatarFileName);
         const selectedProfile = assignment?.profileId || '';
-        const selectedSet = assignment?.expressionSet || DEFAULT_EXPRESSION_SET;
+        const selectedSet = assignment?.expressionSet ?? DEFAULT_PLUS_EXPRESSION_SET;
 
-        // Get expression sets for this character
         const expressionSets = getExpressionSets(avatarFileName);
         const setOptions = expressionSets.map(set => 
             `<option value="${set.folder}" ${set.folder === selectedSet ? 'selected' : ''}>${set.name}</option>`
@@ -102,17 +98,15 @@ export function onCharacterProfileChanged() {
     const characterId = $(this).closest('.character_assignment_item').data('character-id');
     const profileId = $(this).val();
 
-    // Find or create assignment
     let assignment = settings.characterAssignments.find(a => a.characterId === characterId);
     
     if (!assignment) {
-        assignment = { characterId, profileId: '', expressionSet: DEFAULT_EXPRESSION_SET, expressionSets: [] };
+        assignment = { characterId, profileId: '', expressionSet: DEFAULT_PLUS_EXPRESSION_SET, expressionSets: [] };
         settings.characterAssignments.push(assignment);
     }
     
     assignment.profileId = profileId;
     
-    // Clean up empty assignments
     settings.characterAssignments = settings.characterAssignments.filter(a => 
         a.profileId || a.expressionSet || (a.expressionSets && a.expressionSets.length > 0)
     );
@@ -129,12 +123,10 @@ export function onCharacterExpressionSetChanged() {
 
     setCharacterExpressionSet(characterId, expressionSet);
     
-    // Clear sprite cache for this character to force reload with new set
     clearSpriteCache();
     
     saveSettingsDebounced();
     
-    // Trigger expression refresh
     dispatchExpressionSetChanged(characterId, expressionSet);
 }
 
@@ -146,7 +138,6 @@ export async function onExpressionSetAdd() {
     const characterId = item.data('character-id');
     const select = item.find('.character_expression_set_select');
     
-    // Prompt user for folder name
     const folderName = prompt(
         'Enter the subfolder name for the expression set.\n\n' +
         'This should match the subfolder name inside the character\'s expressions folder.\n' +
@@ -157,11 +148,9 @@ export async function onExpressionSetAdd() {
     
     const cleanName = folderName.trim();
     
-    // Show loading indicator
     $(this).find('i').removeClass('fa-plus').addClass('fa-spinner fa-spin');
     
     try {
-        // Validate the folder exists and contains sprites
         const validation = await validateExpressionSetFolder(characterId, cleanName);
         
         if (!validation.valid) {
@@ -174,7 +163,6 @@ export async function onExpressionSetAdd() {
             if (!proceed) return;
         }
         
-        // Add the expression set to settings
         const added = addExpressionSet(characterId, cleanName);
         
         if (!added) {
@@ -182,10 +170,8 @@ export async function onExpressionSetAdd() {
             return;
         }
         
-        // Update the select dropdown
         select.append(`<option value="${cleanName}">${cleanName}</option>`);
         
-        // Select the new set
         select.val(cleanName).trigger('change');
         
         saveSettingsDebounced();
@@ -209,9 +195,8 @@ export function onExpressionSetRemove() {
     const select = item.find('.character_expression_set_select');
     const selectedValue = String(select.val() || '');
     
-    // Cannot remove the default (base folder) option
     if (selectedValue === DEFAULT_EXPRESSION_SET) {
-        toast.warning('Cannot remove the default (base folder) option');
+        toast.warning('Cannot remove the character base folder option');
         return;
     }
     
@@ -219,14 +204,11 @@ export function onExpressionSetRemove() {
         return;
     }
     
-    // Remove the expression set from settings
     const removed = removeExpressionSet(characterId, selectedValue);
     
     if (removed) {
-        // Remove from dropdown
         select.find(`option[value="${selectedValue}"]`).remove();
         
-        // Select default
         select.val(DEFAULT_EXPRESSION_SET).trigger('change');
         
         saveSettingsDebounced();

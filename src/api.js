@@ -11,8 +11,8 @@ import { trimToEndSentence, trimToStartSentence } from '../../../../utils.js';
 import { insightPanelVisible, setLastClassificationScores } from './state.js';
 import { getSettings } from './settings.js';
 import { selectExpression } from './classification.js';
+import { analyzeAndStore } from './analytics.js';
 
-// Forward declaration - will be set by index.js
 let updateInsightPanel = null;
 
 /**
@@ -99,25 +99,16 @@ export async function getExpressionLabel(text) {
     const scores = await getClassificationScores(text);
     setLastClassificationScores(scores);
     
-    // Update insight panel
     if (insightPanelVisible && updateInsightPanel) {
         updateInsightPanel(scores);
     }
     
     const result = selectExpression(scores);
+    
+    analyzeAndStore(text, scores, result.expression, result.score).catch(err => {
+        console.debug('Expressions+ Analytics: Background collection error', err);
+    });
+    
     return result.expression;
 }
 
-// ============================================================================
-// Expression Sets API - Re-exported from expression-sets.js
-// ============================================================================
-
-export { 
-    getExpressionSets,
-    addExpressionSet,
-    removeExpressionSet,
-    validateExpressionSetFolder,
-    getCharacterExpressionSet,
-    setCharacterExpressionSet,
-    dispatchExpressionSetChanged
-} from './expression-sets.js';

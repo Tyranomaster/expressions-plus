@@ -10,12 +10,11 @@ import { debounce_timeout } from '../../../../constants.js';
 import { debounce } from '../../../../utils.js';
 import { system_message_types } from '../../../../../script.js';
 
-import { RESET_SPRITE_LABEL, RULE_TYPE, DEFAULT_EXPRESSION_SET } from './constants.js';
-import { spriteCache } from './state.js';
+import { RESET_SPRITE_LABEL, RULE_TYPE, DEFAULT_EXPRESSION_SET, DEFAULT_PLUS_EXPRESSION_SET } from './constants.js';
+import { spriteCache, currentSpriteFolderName } from './state.js';
 import { getSettings } from './settings.js';
-import { getActiveProfile } from './profiles.js';
+import { getActiveProfileWithFolderOverride } from './profiles.js';
 
-// Forward declarations - will be set by index.js
 let getExpressionsList = null;
 let updateVisualNovelMode = null;
 
@@ -46,28 +45,45 @@ export function setUpdateVisualNovelModeFn(fn) {
  * @returns {import('./constants.js').ExpressionImage}
  */
 export function getPlaceholderImage(expression, isCustom = false) {
-    const settings = getSettings();
-    
-    // Show default emoji if enabled and not a custom expression
-    if (settings.showDefault && !isCustom) {
-        return {
-            expression: expression,
-            isCustom: false,
-            title: `${expression} (default)`,
-            type: 'default',
-            fileName: `${expression}.png`,
-            imageSrc: `/img/default-expressions/${expression}.png`,
-        };
+    if (!isCustom) {
+        return getDefaultPlusBuiltInImage(expression);
     }
     
     return {
         expression: expression,
-        isCustom: isCustom,
+        isCustom: true,
         title: 'No Image',
         type: 'failure',
         fileName: 'No-Image-Placeholder.svg',
         imageSrc: '/img/No-Image-Placeholder.svg',
     };
+}
+
+/**
+ * Gets a built-in Default+ smiley image object for an expression
+ * @param {string} expression
+ * @returns {import('./constants.js').ExpressionImage}
+ */
+function getDefaultPlusBuiltInImage(expression) {
+    const imageSrc = new URL(`../built-in-sprites/default-plus/${expression}.png`, import.meta.url).toString();
+    return {
+        expression,
+        isCustom: false,
+        title: `${expression} (default+)`,
+        type: 'default',
+        fileName: `${expression}.png`,
+        imageSrc,
+    };
+}
+
+/**
+ * Checks whether a sprite folder references the Default+ expression set
+ * @param {string} spriteFolderName
+ * @returns {boolean}
+ */
+function isDefaultPlusSpriteFolder(spriteFolderName) {
+    if (!spriteFolderName) return false;
+    return spriteFolderName === DEFAULT_PLUS_EXPRESSION_SET || spriteFolderName.endsWith(`/${DEFAULT_PLUS_EXPRESSION_SET}`);
 }
 
 /**
@@ -162,7 +178,6 @@ export function chooseSpriteForExpression(spriteFolderName, expression, { prevEx
 
     let sprite = spriteCache[spriteFolderName].find(x => x.label === expression);
     
-    // Try fallback expression
     if (!(sprite?.files.length > 0) && settings.fallback_expression) {
         sprite = spriteCache[spriteFolderName].find(x => x.label === settings.fallback_expression);
     }
@@ -197,15 +212,16 @@ export function getSpriteFolderName(characterMessage = null, characterName = nul
     const message = characterMessage ?? getLastCharacterMessage();
     const avatarFileName = getFolderNameByMessage(message);
     
-    // Check for expression override in original extension settings
     const expressionOverride = extension_settings.expressionOverrides?.find(e => e.name == avatarFileName);
     if (expressionOverride && expressionOverride.path) {
         spriteFolderName = expressionOverride.path;
     }
 
     // Apply expression set if configured
+    // Note: DEFAULT_PLUS_EXPRESSION_SET is a pseudo-set that uses the base folder
+    // with built-in Default+ smileys as fallbacks, not a real subfolder
     const expressionSet = getCharacterExpressionSetFromSettings(avatarFileName);
-    if (expressionSet && expressionSet !== DEFAULT_EXPRESSION_SET) {
+    if (expressionSet && expressionSet !== DEFAULT_EXPRESSION_SET && expressionSet !== DEFAULT_PLUS_EXPRESSION_SET) {
         spriteFolderName = `${spriteFolderName}/${expressionSet}`;
     }
 
@@ -224,7 +240,6 @@ export function getBaseSpriteFolderName(characterMessage = null, characterName =
     const message = characterMessage ?? getLastCharacterMessage();
     const avatarFileName = getFolderNameByMessage(message);
     
-    // Check for expression override in original extension settings
     const expressionOverride = extension_settings.expressionOverrides?.find(e => e.name == avatarFileName);
     if (expressionOverride && expressionOverride.path) {
         spriteFolderName = expressionOverride.path;
@@ -239,11 +254,11 @@ export function getBaseSpriteFolderName(characterMessage = null, characterName =
  * @returns {string} Expression set folder name
  */
 function getCharacterExpressionSetFromSettings(characterId) {
-    if (!characterId) return DEFAULT_EXPRESSION_SET;
+    if (!characterId) return DEFAULT_PLUS_EXPRESSION_SET;
     
     const settings = getSettings();
     const assignment = settings.characterAssignments?.find(a => a.characterId === characterId);
-    return assignment?.expressionSet || DEFAULT_EXPRESSION_SET;
+    return assignment?.expressionSet ?? DEFAULT_PLUS_EXPRESSION_SET;
 }
 
 /**
@@ -329,24 +344,29 @@ export async function drawSpritesList(spriteFolderName, labels, sprites, createL
 
     if (!Array.isArray(labels)) return [];
 
-    // Get custom expression names from current profile
-    const profile = getActiveProfile();
+    const profile = getActiveProfileWithFolderOverride(currentSpriteFolderName);
     const customExpressionNames = profile.rules
         .filter(r => r.type !== RULE_TYPE.SIMPLE)
         .map(r => r.name);
     
-    // Combine base labels with custom expression names
+    const settings = getSettings();
+    const userCustomExpressions = settings.custom || [];
+
     const allLabels = [...labels, ...customExpressionNames].filter(onlyUnique).sort();
 
     for (const expression of allLabels) {
         const isCustom = customExpressionNames.includes(expression);
+        const isUserCustom = userCustomExpressions.includes(expression);
         const images = sprites
             .filter(s => s.label === expression)
             .map(s => s.files)
             .flat();
 
         if (images.length === 0) {
-            const html = createListItemHtml(expression, [getPlaceholderImage(expression, isCustom)], isCustom);
+            const fallbackImage = !isUserCustom
+                ? getDefaultPlusBuiltInImage(expression)
+                : getPlaceholderImage(expression, true);
+            const html = createListItemHtml(expression, [fallbackImage], isCustom);
             $('#expresssions_plus_image_list').append(html);
             continue;
         }

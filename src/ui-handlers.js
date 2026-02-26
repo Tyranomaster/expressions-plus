@@ -2,8 +2,6 @@
  * UI Event Handlers for Expressions+
  */
 
-/* global toastr */
-
 /**
  * @typedef {Object} ToastrLib
  * @property {function(string, string=, Object=): void} error
@@ -24,9 +22,9 @@ import { getSettings } from './settings.js';
 import { getSpriteFolderName, getLastCharacterMessage } from './sprites.js';
 import { sendExpressionCall } from './expression-display.js';
 
-// Forward declarations - will be set by index.js
 let validateImages = null;
 let renderRulesList = null;
+let getExpressionsList = null;
 
 /**
  * Sets the validateImages function reference
@@ -42,6 +40,14 @@ export function setValidateImagesFn(fn) {
  */
 export function setRenderRulesListFn(fn) {
     renderRulesList = fn;
+}
+
+/**
+ * Sets the getExpressionsList function reference
+ * @param {Function} fn 
+ */
+export function setGetExpressionsListFn(fn) {
+    getExpressionsList = fn;
 }
 
 // ============================================================================
@@ -77,12 +83,10 @@ export async function onProfileChanged() {
     settings.activeProfileId = String($('#expressions_plus_profile_select').val());
     saveSettingsDebounced();
     
-    // Refresh UI
     if (renderRulesList) {
         renderRulesList();
     }
     
-    // Refresh sprites list for new profile's custom expressions
     const currentLastMessage = getLastCharacterMessage();
     const spriteFolderName = getSpriteFolderName(currentLastMessage, currentLastMessage?.name);
     if (spriteFolderName && validateImages) {
@@ -185,4 +189,58 @@ export async function onClickExpressionDelete(event) {
     } catch (error) {
         toast.error('Failed to delete image');
     }
+}
+
+// ============================================================================
+// Low Confidence Settings
+// ============================================================================
+
+/**
+ * Renders the low confidence expression picker dropdown
+ */
+async function renderLowConfidenceExpressionPicker() {
+    const settings = getSettings();
+    const expressions = getExpressionsList ? await getExpressionsList() : [];
+    const picker = $('#expressions_plus_low_confidence_expression');
+    
+    picker.empty();
+    
+    expressions.forEach(expression => {
+        const selected = expression === settings.lowConfidenceExpression ? 'selected' : '';
+        picker.append(`<option value="${expression}" ${selected}>${expression}</option>`);
+    });
+    
+    if (settings.lowConfidenceExpression) {
+        picker.val(settings.lowConfidenceExpression);
+    } else {
+        picker.val('neutral');
+    }
+}
+
+/**
+ * Initializes the low confidence settings UI
+ */
+export async function initLowConfidenceSettings() {
+    const settings = getSettings();
+    
+    $('#expressions_plus_low_confidence_enabled').prop('checked', settings.lowConfidenceEnabled ?? true)
+        .on('change', function() {
+            settings.lowConfidenceEnabled = $(this).prop('checked');
+            saveSettingsDebounced();
+        });
+    
+    const thresholdPercent = Math.round((settings.lowConfidenceThreshold ?? 0.10) * 100);
+    $('#expressions_plus_low_confidence_threshold').val(thresholdPercent)
+        .on('change', function() {
+            const value = parseInt(String($(this).val()), 10) || 10;
+            settings.lowConfidenceThreshold = value / 100;
+            saveSettingsDebounced();
+        });
+    
+    await renderLowConfidenceExpressionPicker();
+    
+    $('#expressions_plus_low_confidence_expression').on('change', function() {
+        settings.lowConfidenceExpression = String($(this).val());
+        saveSettingsDebounced();
+    });
 }

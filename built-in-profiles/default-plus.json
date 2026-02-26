@@ -1,0 +1,832 @@
+{
+  "version": 1,
+  "type": "expressions-plus-profile",
+  "profile": {
+    "name": "Default +",
+    "rules": [
+      {
+        "id": "rule_1770269241690_drn3hdw1z",
+        "name": "anxious",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "fear",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "nervousness",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770878615125_n0gdwvvlw",
+        "name": "awe",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "surprise",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "admiration",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770269138586_immtx8bba",
+        "name": "bewildered",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "confusion",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "surprise",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770269193225_6jj5b499s",
+        "name": "contempt",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "anger",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "disapproval",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1772138819298_oh1n406xv",
+        "name": "despair",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "grief",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "sadness",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770878657834_xgxhyukpo",
+        "name": "disdain",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "disapproval",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "disgust",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770878717270_muunn1eak",
+        "name": "dread",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "fear",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "realization",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1772138845089_xs4npzwa6",
+        "name": "elated",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "excitement",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "joy",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770269173079_tmtxy8qwk",
+        "name": "exasperated",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "anger",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "annoyance",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770878584535_sowmf3aih",
+        "name": "exhileration",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "excitement",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "surprise",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770269214634_hkx7sci98",
+        "name": "frustrated",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "annoyance",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "disappointment",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770878640056_zsw05hycy",
+        "name": "fury",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "anger",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "excitement",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770878703139_aiggdolaz",
+        "name": "horrified",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "disgust",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "fear",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770269261780_vbywsk2yl",
+        "name": "intrigued",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "curiosity",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "desire",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770269285058_vv5jpgz4n",
+        "name": "lustful",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "desire",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "excitement",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1772138798687_0xjvbfdiw",
+        "name": "overwhelmed",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "confusion",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "excitement",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770878552758_1rfiavb0d",
+        "name": "unsettled",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "confusion",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "nervousness",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770878601972_vjlc5hlv8",
+        "name": "wonder",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "confusion",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "curiosity",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1770269106598_nwbv1cbfb",
+        "name": "admiration",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "admiration"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_86labadwu",
+        "name": "amusement",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "amusement"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_82b9ho8jv",
+        "name": "anger",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "anger"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_5hpuub5q3",
+        "name": "annoyance",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "annoyance"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_tkn97iftt",
+        "name": "approval",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "approval"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_k731kw302",
+        "name": "caring",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "caring"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_h1ld9d6ja",
+        "name": "confusion",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "confusion"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_fqqgbfgbo",
+        "name": "curiosity",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "curiosity"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_en2u4rm3p",
+        "name": "desire",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "desire"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_yh63nkx4m",
+        "name": "disappointment",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "disappointment"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_e2a94a4av",
+        "name": "disapproval",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "disapproval"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_4se5924pd",
+        "name": "disgust",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "disgust"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_kmjve5cjd",
+        "name": "embarrassment",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "embarrassment"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_2ajndu2o4",
+        "name": "excitement",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "excitement"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_7b6qn2oud",
+        "name": "fear",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "fear"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_cei2oxhud",
+        "name": "gratitude",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "gratitude"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_3h42gqxkh",
+        "name": "grief",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "grief"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_8neih5qus",
+        "name": "joy",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "joy"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_59bxy9oql",
+        "name": "love",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "love"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_y7mchod8h",
+        "name": "nervousness",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "nervousness"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_9dz0pnr1m",
+        "name": "optimism",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "optimism"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_sysjnsfb6",
+        "name": "pride",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "pride"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_1io29r4z1",
+        "name": "realization",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "realization"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_fwrdt72ga",
+        "name": "relief",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "relief"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_kchd4w4a2",
+        "name": "remorse",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "remorse"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_ejzj3fieb",
+        "name": "sadness",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "sadness"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_ada8fbdmd",
+        "name": "surprise",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "surprise"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "rule_1770269106598_zy5zlcd68",
+        "name": "neutral",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "neutral"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      }
+    ],
+    "fallbackExpression": "neutral"
+  }
+}

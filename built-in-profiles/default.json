@@ -1,0 +1,346 @@
+{
+  "version": 1,
+  "type": "expressions-plus-profile",
+  "profile": {
+    "name": "Default",
+    "rules": [
+      {
+        "id": "base_admiration",
+        "name": "admiration",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "admiration"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_amusement",
+        "name": "amusement",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "amusement"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_anger",
+        "name": "anger",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "anger"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_annoyance",
+        "name": "annoyance",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "annoyance"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_approval",
+        "name": "approval",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "approval"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_caring",
+        "name": "caring",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "caring"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_confusion",
+        "name": "confusion",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "confusion"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_curiosity",
+        "name": "curiosity",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "curiosity"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_desire",
+        "name": "desire",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "desire"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_disappointment",
+        "name": "disappointment",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "disappointment"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_disapproval",
+        "name": "disapproval",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "disapproval"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_disgust",
+        "name": "disgust",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "disgust"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_embarrassment",
+        "name": "embarrassment",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "embarrassment"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_excitement",
+        "name": "excitement",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "excitement"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_fear",
+        "name": "fear",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "fear"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_gratitude",
+        "name": "gratitude",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "gratitude"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_grief",
+        "name": "grief",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "grief"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_joy",
+        "name": "joy",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "joy"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_love",
+        "name": "love",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "love"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_nervousness",
+        "name": "nervousness",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "nervousness"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_optimism",
+        "name": "optimism",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "optimism"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_pride",
+        "name": "pride",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "pride"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_realization",
+        "name": "realization",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "realization"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_relief",
+        "name": "relief",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "relief"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_remorse",
+        "name": "remorse",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "remorse"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_sadness",
+        "name": "sadness",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "sadness"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_surprise",
+        "name": "surprise",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "surprise"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      },
+      {
+        "id": "base_neutral",
+        "name": "neutral",
+        "type": "simple",
+        "conditions": [
+          {
+            "emotion": "neutral"
+          }
+        ],
+        "logic": "and",
+        "enabled": true
+      }
+    ],
+    "fallbackExpression": "joy"
+  }
+}

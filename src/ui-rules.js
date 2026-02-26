@@ -2,8 +2,6 @@
  * Rules UI for Expressions+
  */
 
-/* global toastr */
-
 /**
  * @typedef {Object} ToastrLib
  * @property {function(string, string=, Object=): void} error
@@ -19,10 +17,9 @@ const toast = window.toastr;
 import { Popup, POPUP_RESULT } from '../../../../popup.js';
 
 import { RULE_TYPE } from './constants.js';
-import { getActiveProfile } from './profiles.js';
-import { createRule, updateRule, deleteRule } from './rules.js';
-
-// Forward declarations - will be set by index.js
+import { getActiveProfile, getCachedFolderProfile } from './profiles.js';
+import { currentSpriteFolderName } from './state.js';
+import { createRule, updateRule, deleteRule, moveRule, sortRules } from './rules.js';
 let getExpressionsList = null;
 
 /**
@@ -38,26 +35,66 @@ export function setGetExpressionsListFn(fn) {
 // ============================================================================
 
 /**
+ * Updates the folder profile notice banner without re-rendering the full rules list.
+ * Called by the module worker after fetching/caching a folder profile.
+ */
+export function updateFolderProfileNotice() {
+    const folderProfile = getCachedFolderProfile(currentSpriteFolderName);
+    const notice = $('#expressions_plus_folder_profile_notice');
+    if (folderProfile) {
+        $('#expressions_plus_folder_profile_name').text(`Using folder profile: "${folderProfile.name}"`);
+        notice.show();
+    } else {
+        notice.hide();
+    }
+}
+
+/**
  * Renders the rules list
  */
 export function renderRulesList() {
     const profile = getActiveProfile();
     const container = $('#expressions_plus_rules_list');
     container.empty();
+    updateFolderProfileNotice();
 
-    // Separate custom rules from base rules (including legacy types)
+    const isReadonly = profile.isDefault === true;
+
+    // Toggle add/sort buttons based on readonly state
+    const addBtn = $('#expressions_plus_add_rule');
+    const sortAscBtn = $('#expressions_plus_sort_rules_asc');
+    const sortDescBtn = $('#expressions_plus_sort_rules_desc');
+
+    if (isReadonly) {
+        addBtn.addClass('disabled').attr('title', 'Cannot modify a built-in profile');
+        sortAscBtn.addClass('disabled').attr('title', 'Cannot modify a built-in profile');
+        sortDescBtn.addClass('disabled').attr('title', 'Cannot modify a built-in profile');
+    } else {
+        addBtn.removeClass('disabled').attr('title', '');
+        sortAscBtn.removeClass('disabled').attr('title', 'Sort A → Z');
+        sortDescBtn.removeClass('disabled').attr('title', 'Sort Z → A');
+    }
+
+    if (isReadonly) {
+        container.append('<div class="readonly_profile_notice"><i class="fa-solid fa-lock"></i> This is a built-in profile. To add or modify rules, create a new profile based on this one.</div>');
+    }
+
     const customRules = profile.rules.filter(r => r.type !== RULE_TYPE.SIMPLE && r.type !== 'simple');
     const baseRules = profile.rules.filter(r => r.type === RULE_TYPE.SIMPLE || r.type === 'simple');
 
     if (customRules.length === 0) {
-        container.append('<div class="rules_empty_message">No custom expression rules defined.<br>Click "Add Rule" to create one.</div>');
+        if (!isReadonly) {
+            container.append('<div class="rules_empty_message">No custom expression rules defined.<br>Click "Add Rule" to create one.</div>');
+        }
     } else {
         customRules.forEach(rule => {
-            container.append(createRuleItemHtml(rule));
+            container.append(createRuleItemHtml(rule, isReadonly));
         });
+        if (!isReadonly) {
+            initRuleDragAndDrop();
+        }
     }
 
-    // Show base rules count
     $('#expressions_plus_base_rules_count').text(`${baseRules.length} base expressions active`);
 }
 
@@ -66,7 +103,7 @@ export function renderRulesList() {
  * @param {Object} rule 
  * @returns {string}
  */
-function createRuleItemHtml(rule) {
+function createRuleItemHtml(rule, isReadonly = false) {
     const typeLabels = {
         [RULE_TYPE.SIMPLE]: 'Simple',
         [RULE_TYPE.RANGE]: 'Range',
@@ -83,7 +120,6 @@ function createRuleItemHtml(rule) {
     const conditionsSummary = rule.conditions.map(c => {
         let text = c.emotion;
         if (rule.type === RULE_TYPE.RANGE || rule.type === 'threshold_high' || rule.type === 'threshold_low' || rule.type === 'threshold_range') {
-            // Format as range: n <=/< x <=/< m
             const parts = [];
             if (c.minEnabled || c.minScore !== undefined) {
                 const minVal = ((c.minScore ?? 0) * 100).toFixed(0);
@@ -101,11 +137,7 @@ function createRuleItemHtml(rule) {
         return text;
     }).join(' + ');
 
-    return `
-        <div class="rule_item" data-rule-id="${rule.id}">
-            <span class="rule_name">${rule.name}</span>
-            <span class="rule_type_badge">${typeLabels[rule.type] || rule.type}</span>
-            <span class="rule_conditions_summary" title="${conditionsSummary}">${conditionsSummary}</span>
+    const actionsHtml = isReadonly ? '' : `
             <div class="rule_actions">
                 <button class="menu_button rule_edit_btn" title="Edit">
                     <i class="fa-solid fa-pencil"></i>
@@ -113,15 +145,148 @@ function createRuleItemHtml(rule) {
                 <button class="menu_button rule_delete_btn" title="Delete">
                     <i class="fa-solid fa-trash"></i>
                 </button>
-            </div>
+            </div>`;
+
+    const dragHandleHtml = isReadonly ? '' : `
+            <span class="rule_drag_handle" title="Drag to reorder">
+                <i class="fa-solid fa-grip-vertical"></i>
+            </span>`;
+
+    return `
+        <div class="rule_item" data-rule-id="${rule.id}" ${isReadonly ? '' : 'draggable="true"'}>
+            ${dragHandleHtml}
+            <span class="rule_name">${rule.name}</span>
+            <span class="rule_type_badge" data-type="${rule.type}">${typeLabels[rule.type] || rule.type}</span>
+            <span class="rule_conditions_summary" title="${conditionsSummary}">${conditionsSummary}</span>
+            ${actionsHtml}
         </div>
     `;
+}
+
+// ============================================================================
+// Rule Drag & Drop Reordering
+// ============================================================================
+
+/** @type {HTMLElement|null} */
+let draggedRuleEl = null;
+
+/**
+ * Initializes drag-and-drop on the rule items in the list
+ */
+function initRuleDragAndDrop() {
+    const container = document.getElementById('expressions_plus_rules_list');
+    if (!container) return;
+
+    container.querySelectorAll('.rule_item[draggable]').forEach(item => {
+        item.addEventListener('dragstart', onRuleDragStart);
+        item.addEventListener('dragend', onRuleDragEnd);
+        item.addEventListener('dragover', onRuleDragOver);
+        item.addEventListener('dragenter', onRuleDragEnter);
+        item.addEventListener('dragleave', onRuleDragLeave);
+        item.addEventListener('drop', onRuleDrop);
+    });
+}
+
+/** @param {DragEvent} e */
+function onRuleDragStart(e) {
+    draggedRuleEl = /** @type {HTMLElement} */ (e.currentTarget);
+    draggedRuleEl.classList.add('rule_dragging');
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', draggedRuleEl.dataset.ruleId || '');
+    }
+}
+
+/** @param {DragEvent} e */
+function onRuleDragEnd(e) {
+    const el = /** @type {HTMLElement} */ (e.currentTarget);
+    el.classList.remove('rule_dragging');
+    document.querySelectorAll('.rule_drag_over').forEach(el => el.classList.remove('rule_drag_over'));
+    draggedRuleEl = null;
+}
+
+/** @param {DragEvent} e */
+function onRuleDragOver(e) {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+}
+
+/** @param {DragEvent} e */
+function onRuleDragEnter(e) {
+    e.preventDefault();
+    const target = /** @type {HTMLElement} */ (e.currentTarget);
+    if (target !== draggedRuleEl) {
+        target.classList.add('rule_drag_over');
+    }
+}
+
+/** @param {DragEvent} e */
+function onRuleDragLeave(e) {
+    const target = /** @type {HTMLElement} */ (e.currentTarget);
+    target.classList.remove('rule_drag_over');
+}
+
+/** @param {DragEvent} e */
+function onRuleDrop(e) {
+    e.preventDefault();
+    const target = /** @type {HTMLElement} */ (e.currentTarget);
+    target.classList.remove('rule_drag_over');
+
+    if (!draggedRuleEl || target === draggedRuleEl) return;
+
+    const profile = getActiveProfile();
+    if (profile.isDefault) return;
+
+    const draggedId = draggedRuleEl.dataset.ruleId;
+    const targetId = target.dataset.ruleId;
+    if (!draggedId || !targetId) return;
+    const targetIndex = profile.rules.findIndex(r => r.id === targetId);
+    if (targetIndex === -1) return;
+
+    if (moveRule(profile.id, draggedId, targetIndex)) {
+        renderRulesList();
+    }
+}
+
+/**
+ * Handles clicking sort rules A-Z
+ */
+export function onClickSortRulesAsc() {
+    const profile = getActiveProfile();
+    if (profile.isDefault) {
+        toast.warning('Cannot modify a built-in profile. Create a new profile to reorder rules.');
+        return;
+    }
+    if (sortRules(profile.id, 'asc')) {
+        renderRulesList();
+        toast.success('Rules sorted A → Z');
+    }
+}
+
+/**
+ * Handles clicking sort rules Z-A
+ */
+export function onClickSortRulesDesc() {
+    const profile = getActiveProfile();
+    if (profile.isDefault) {
+        toast.warning('Cannot modify a built-in profile. Create a new profile to reorder rules.');
+        return;
+    }
+    if (sortRules(profile.id, 'desc')) {
+        renderRulesList();
+        toast.success('Rules sorted Z → A');
+    }
 }
 
 /**
  * Handles clicking add rule button
  */
 export async function onClickAddRule() {
+    const profile = getActiveProfile();
+    if (profile.isDefault) {
+        toast.warning('Cannot add rules to a built-in profile. Create a new profile based on this one to add custom rules.');
+        return;
+    }
     await showRuleEditor(null);
 }
 
@@ -129,6 +294,11 @@ export async function onClickAddRule() {
  * Handles clicking edit rule button
  */
 export async function onClickEditRule() {
+    const profile = getActiveProfile();
+    if (profile.isDefault) {
+        toast.warning('Cannot edit rules in a built-in profile. Create a new profile based on this one to modify rules.');
+        return;
+    }
     const ruleId = $(this).closest('.rule_item').data('rule-id');
     await showRuleEditor(ruleId);
 }
@@ -137,9 +307,13 @@ export async function onClickEditRule() {
  * Handles clicking delete rule button
  */
 export async function onClickDeleteRule() {
+    const profile = getActiveProfile();
+    if (profile.isDefault) {
+        toast.warning('Cannot delete rules from a built-in profile. Create a new profile based on this one to modify rules.');
+        return;
+    }
     const ruleItem = $(this).closest('.rule_item');
     const ruleId = ruleItem.data('rule-id');
-    const profile = getActiveProfile();
     const rule = profile.rules.find(r => r.id === ruleId);
     
     if (!rule) return;
@@ -170,8 +344,6 @@ async function showRuleEditor(ruleId) {
         const profile = getActiveProfile();
         const rule = ruleId ? profile.rules.find(r => r.id === ruleId) : null;
         const isNew = !rule;
-
-        // Convert legacy rule types to new types for editing
         let effectiveType = rule?.type || RULE_TYPE.COMBINATION;
         if (['threshold_high', 'threshold_low', 'threshold_range'].includes(effectiveType)) {
             effectiveType = RULE_TYPE.RANGE;
@@ -227,12 +399,8 @@ async function showRuleEditor(ruleId) {
             wide: true,
             large: true,
         });
-
-        // Setup condition management
         const $dlg = $(popup.dlg);
         const conditionsContainer = $dlg.find('#rule_editor_conditions');
-        
-        // Initialize conditions from existing rule (converting legacy format)
         let conditions = [];
         if (rule?.conditions) {
             conditions = rule.conditions.map(c => ({
@@ -245,8 +413,6 @@ async function showRuleEditor(ruleId) {
                 maxInclusive: c.maxInclusive ?? false,
             }));
         }
-        
-        // Initialize max difference for combination rules
         const initialMaxDiff = rule?.maxDifference ?? 0.25;
         $dlg.find('#rule_editor_max_diff').val((initialMaxDiff * 100).toFixed(0));
 
@@ -254,8 +420,6 @@ async function showRuleEditor(ruleId) {
             const ruleType = String($dlg.find('#rule_editor_type').val());
             const isCombination = ruleType === RULE_TYPE.COMBINATION;
             const isRange = ruleType === RULE_TYPE.RANGE;
-            
-            // Show/hide combination settings
             $dlg.find('#rule_editor_combination_settings').css('display', isCombination ? 'block' : 'none');
             
             conditionsContainer.empty();
@@ -273,8 +437,6 @@ async function showRuleEditor(ruleId) {
             const maxChecked = condition.maxEnabled ? 'checked' : '';
             const minInclusiveChecked = condition.minInclusive !== false ? 'checked' : '';
             const maxInclusiveChecked = condition.maxInclusive === true ? 'checked' : '';
-            
-            // Range UI: [checkbox] n% [</<= toggle] emotion [</<= toggle] m% [checkbox]
             const rangeUI = isRange ? `
                 <div class="condition_range_ui">
                     <label class="checkbox_label" title="Enable minimum bound">
@@ -319,9 +481,7 @@ async function showRuleEditor(ruleId) {
             `;
         }
 
-        // Event handlers
         $dlg.find('#rule_editor_type').on('change', function() {
-            // Reset conditions when changing type
             conditions = conditions.map(c => ({
                 emotion: c.emotion,
                 minScore: 0,
@@ -353,7 +513,6 @@ async function showRuleEditor(ruleId) {
             renderConditions();
         });
 
-        // Handle min/max enable checkboxes
         $dlg.on('change', '.condition_min_enabled, .condition_max_enabled', function() {
             const conditionEl = $(this).closest('.condition_editor');
             const index = conditionEl.data('index');
@@ -369,7 +528,6 @@ async function showRuleEditor(ruleId) {
             }
         });
 
-        // Handle other changes
         $dlg.on('change', '.condition_emotion, .condition_min_val, .condition_max_val, .condition_min_op, .condition_max_op', function() {
             const conditionEl = $(this).closest('.condition_editor');
             const index = conditionEl.data('index');
@@ -390,17 +548,14 @@ async function showRuleEditor(ruleId) {
             conditions[index].maxInclusive = conditionEl.find('.condition_max_op').val() === 'inclusive';
         });
 
-        // Initial render
         renderConditions();
 
-        // Show popup and handle result
         const result = await popup.show();
         
         if (result === POPUP_RESULT.AFFIRMATIVE) {
             const name = String($dlg.find('#rule_editor_name').val() || '').trim();
             const type = String($dlg.find('#rule_editor_type').val());
 
-            // Validate
             if (!name) {
                 toast.error('Please enter an expression name');
                 return;
@@ -419,7 +574,6 @@ async function showRuleEditor(ruleId) {
                 enabled: rule?.enabled !== false,
             };
             
-            // Add maxDifference for combination rules
             if (type === RULE_TYPE.COMBINATION) {
                 const maxDiffVal = String($dlg.find('#rule_editor_max_diff').val() || '25');
                 ruleData.maxDifference = parseFloat(maxDiffVal) / 100;

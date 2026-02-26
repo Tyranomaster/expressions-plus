@@ -8,7 +8,6 @@ import { RESET_SPRITE_LABEL } from './constants.js';
 import { lastExpression, spriteCache, setLastMessage } from './state.js';
 import { getSettings } from './settings.js';
 
-// Forward declarations - will be set by index.js
 let validateImages = null;
 let updateVisualNovelMode = null;
 let isVisualNovelMode = null;
@@ -129,13 +128,12 @@ export async function setImage(img, path) {
 export function setDefaultEmojiForImage(img, expression) {
     const settings = getSettings();
     
-    // Can't set default emoji for custom expressions
     if (settings.custom?.includes(expression)) {
         console.debug(`Can't set default emoji for custom expression (${expression}), setting to neutral instead.`);
         expression = 'neutral';
     }
 
-    const defImgUrl = `/img/default-expressions/${expression}.png`;
+    const defImgUrl = new URL(`../built-in-sprites/default-plus/${expression}.png`, import.meta.url).toString();
     img.attr('src', defImgUrl);
     img.attr('data-expression', expression);
     img.attr('data-sprite-filename', null);
@@ -248,7 +246,6 @@ export async function setExpression(spriteFolderName, expression, { force = fals
         console.debug('Expression+ not found:', expression);
     }
 
-    // Show the expression holder
     document.getElementById('expression-plus-holder').style.display = '';
 }
 

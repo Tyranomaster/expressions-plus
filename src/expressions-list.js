@@ -5,8 +5,9 @@
 import { getRequestHeaders } from '../../../../../script.js';
 
 import { DEFAULT_EXPRESSIONS } from './constants.js';
-import { expressionsList, setExpressionsList } from './state.js';
+import { expressionsList, setExpressionsList, currentSpriteFolderName } from './state.js';
 import { getSettings } from './settings.js';
+import { getActiveProfileWithFolderOverride } from './profiles.js';
 
 // ============================================================================
 // Expressions List
@@ -20,8 +21,11 @@ export function getCachedExpressions() {
     if (!Array.isArray(expressionsList)) return [];
     const settings = getSettings();
     const customExpressions = settings.custom || [];
-    // Use Set for unique values
-    return [...new Set([...expressionsList, ...customExpressions])];
+    const profileRuleExpressions = (getActiveProfileWithFolderOverride(currentSpriteFolderName)?.rules || [])
+        .map(rule => rule?.name)
+        .filter(name => Boolean(name));
+    // Use Set for unique values, then sort alphabetically
+    return [...new Set([...expressionsList, ...profileRuleExpressions, ...customExpressions])].sort();
 }
 
 /**

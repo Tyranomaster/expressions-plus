@@ -6,7 +6,6 @@
         </div>
 
         <div class="inline-drawer-content">
-            <!-- Basic Settings -->
             <label class="checkbox_label" for="expressions_plus_translate" title="Use the selected API from Chat Translation extension settings.">
                 <input id="expressions_plus_translate" type="checkbox">
                 <span>Translate text to English before classification</span>
@@ -23,10 +22,13 @@
                 <input id="expressions_plus_insight_toggle" type="checkbox">
                 <span>Show Insight Panel</span>
             </label>
+            <label class="checkbox_label" for="expressions_plus_prioritize_folder_profiles" title="When enabled, profile JSON files placed in a character's sprite folder will take priority over assigned profiles. This lets sprite set creators bundle expression rules with their sprites.">
+                <input id="expressions_plus_prioritize_folder_profiles" type="checkbox">
+                <span>Prioritize profiles in image folder</span>
+            </label>
 
             <hr>
 
-            <!-- Fallback Expression -->
             <div class="flex-container flexFlowColumn marginTop5">
                 <label for="expressions_plus_fallback">Default / Fallback Expression</label>
                 <select id="expressions_plus_fallback" class="text_pole"></select>
@@ -34,18 +36,53 @@
 
             <hr>
 
-            <!-- Profile Management -->
+            <div class="expressions_plus_collapsible">
+                <div class="flex-container justifySpaceBetween alignItemsCenter section_toggle">
+                    <label>Low Confidence Fallback</label>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="section_content" style="display: none;">
+                    <small>Show a specific expression when classification confidence is below a threshold.</small>
+                    
+                    <label class="checkbox_label marginTop5" for="expressions_plus_low_confidence_enabled">
+                        <input id="expressions_plus_low_confidence_enabled" type="checkbox">
+                        <span>Enable Low Confidence Fallback</span>
+                    </label>
+                    
+                    <div class="flex-container flexFlowColumn marginTop5">
+                        <label for="expressions_plus_low_confidence_threshold">Minimum Confidence (%)</label>
+                        <div class="flex-container gap5px alignItemsCenter">
+                            <input type="number" id="expressions_plus_low_confidence_threshold" class="text_pole" min="0" max="100" step="1" value="10">
+                            <span>%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-container flexFlowColumn marginTop5">
+                        <label for="expressions_plus_low_confidence_expression">Low Confidence Expression</label>
+                        <select id="expressions_plus_low_confidence_expression" class="text_pole"></select>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
             <div class="flex-container justifySpaceBetween alignItemsCenter">
                 <label for="expressions_plus_profile_select">Active Profile</label>
                 <div class="flex-container gap5px">
                     <div id="expressions_plus_profile_create" class="menu_button menu_button_icon" title="Create Profile">
                         <i class="fa-solid fa-plus"></i>
                     </div>
+                    <div id="expressions_plus_profile_edit" class="menu_button menu_button_icon" title="Rename Profile">
+                        <i class="fa-solid fa-pencil"></i>
+                    </div>
                     <div id="expressions_plus_profile_delete" class="menu_button menu_button_icon" title="Delete Profile">
                         <i class="fa-solid fa-trash"></i>
                     </div>
                     <div id="expressions_plus_profile_export" class="menu_button menu_button_icon" title="Export Profile">
                         <i class="fa-solid fa-file-export"></i>
+                    </div>
+                    <div id="expressions_plus_profile_export_folder" class="menu_button menu_button_icon" title="Export profile for sprite folder (fixed filename for sharing)">
+                        <i class="fa-solid fa-folder-open"></i>
                     </div>
                     <div id="expressions_plus_profile_import" class="menu_button menu_button_icon" title="Import Profile">
                         <i class="fa-solid fa-file-import"></i>
@@ -56,12 +93,23 @@
 
             <hr>
 
-            <!-- Custom Expression Rules -->
+            <div id="expressions_plus_folder_profile_notice" class="folder_profile_notice" style="display: none;">
+                <i class="fa-solid fa-folder"></i>
+                <span id="expressions_plus_folder_profile_name"></span>
+            </div>
             <div class="flex-container justifySpaceBetween alignItemsCenter">
                 <label>Custom Expression Rules</label>
-                <div id="expressions_plus_add_rule" class="menu_button menu_button_icon">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Add Rule</span>
+                <div class="flex-container gap5px">
+                    <div id="expressions_plus_sort_rules_asc" class="menu_button menu_button_icon" title="Sort A → Z">
+                        <i class="fa-solid fa-arrow-down-a-z"></i>
+                    </div>
+                    <div id="expressions_plus_sort_rules_desc" class="menu_button menu_button_icon" title="Sort Z → A">
+                        <i class="fa-solid fa-arrow-down-z-a"></i>
+                    </div>
+                    <div id="expressions_plus_add_rule" class="menu_button menu_button_icon">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Rule</span>
+                    </div>
                 </div>
             </div>
             <div id="expressions_plus_rules_list"></div>
@@ -71,7 +119,6 @@
 
             <hr>
 
-            <!-- Character Assignments -->
             <div class="expressions_plus_collapsible">
                 <div class="flex-container justifySpaceBetween alignItemsCenter section_toggle">
                     <label>Character Profile Assignments</label>
@@ -85,7 +132,45 @@
 
             <hr>
 
-            <!-- Sprite List -->
+            <div class="expressions_plus_collapsible">
+                <div class="flex-container justifySpaceBetween alignItemsCenter section_toggle">
+                    <label>Expression Analytics</label>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="section_content" style="display: none;">
+                    <small>Collect data on expression combinations that could outperform chosen expressions.</small>
+                    
+                    <label class="checkbox_label marginTop5" for="expressions_plus_analytics_enabled">
+                        <input id="expressions_plus_analytics_enabled" type="checkbox">
+                        <span>Enable Analytics Collection</span>
+                    </label>
+                    
+                    <div class="flex-container flexFlowColumn marginTop5">
+                        <label>Collect combinations of:</label>
+                        <div class="flex-container gap10px">
+                            <label class="radio_label">
+                                <input type="radio" name="expressions_plus_analytics_emotion_count" value="2"> 2 emotions
+                            </label>
+                            <label class="radio_label">
+                                <input type="radio" name="expressions_plus_analytics_emotion_count" value="3"> 3 emotions
+                            </label>
+                            <label class="radio_label">
+                                <input type="radio" name="expressions_plus_analytics_emotion_count" value="both" checked> Both
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-container gap5px marginTop10">
+                        <div id="expressions_plus_analytics_view" class="menu_button menu_button_icon flex1">
+                            <i class="fa-solid fa-chart-bar"></i>
+                            <span>View Analytics</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
             <div id="expressions_plus_no_chat">
                 Open a chat to see the character expressions.
             </div>

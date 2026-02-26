@@ -4,7 +4,7 @@
  */
 
 import { getSettings } from './settings.js';
-import { DEFAULT_EXPRESSION_SET } from './constants.js';
+import { DEFAULT_EXPRESSION_SET, DEFAULT_PLUS_EXPRESSION_SET } from './constants.js';
 
 // ============================================================================
 // Expression Sets API
@@ -17,19 +17,24 @@ import { DEFAULT_EXPRESSION_SET } from './constants.js';
  * @returns {import('./constants.js').ExpressionSet[]} Array of expression sets
  */
 export function getExpressionSets(characterId) {
-    if (!characterId) return [{ name: 'Default (Base Folder)', folder: DEFAULT_EXPRESSION_SET }];
+    if (!characterId) {
+        return [{ name: 'Default + (Smiley Set)', folder: DEFAULT_PLUS_EXPRESSION_SET }];
+    }
     
     const settings = getSettings();
     const assignment = settings.characterAssignments?.find(a => a.characterId === characterId);
     const configuredSets = assignment?.expressionSets || [];
     
-    // Always include the default (base folder) option first
-    const sets = [{ name: 'Default (Base Folder)', folder: DEFAULT_EXPRESSION_SET }];
+    const sets = [
+        { name: 'Default + (Smiley Set)', folder: DEFAULT_PLUS_EXPRESSION_SET },
+        { name: characterId, folder: DEFAULT_EXPRESSION_SET },
+    ];
     
-    // Add user-configured sets
     for (const folderName of configuredSets) {
         if (folderName && folderName.trim()) {
-            sets.push({ name: folderName, folder: folderName });
+            if (!sets.some(set => set.folder === folderName)) {
+                sets.push({ name: folderName, folder: folderName });
+            }
         }
     }
     
@@ -57,7 +62,7 @@ export function addExpressionSet(characterId, folderName) {
         assignment = { 
             characterId, 
             profileId: '', 
-            expressionSet: DEFAULT_EXPRESSION_SET,
+            expressionSet: DEFAULT_PLUS_EXPRESSION_SET,
             expressionSets: []
         };
         settings.characterAssignments.push(assignment);
@@ -67,7 +72,6 @@ export function addExpressionSet(characterId, folderName) {
         assignment.expressionSets = [];
     }
     
-    // Check if already exists
     const normalizedName = folderName.trim();
     if (assignment.expressionSets.includes(normalizedName)) {
         return false;
@@ -96,7 +100,6 @@ export function removeExpressionSet(characterId, folderName) {
     
     assignment.expressionSets.splice(index, 1);
     
-    // If current expression set was removed, reset to default
     if (assignment.expressionSet === folderName) {
         assignment.expressionSet = DEFAULT_EXPRESSION_SET;
     }
@@ -136,7 +139,7 @@ export async function validateExpressionSetFolder(characterId, folderName) {
 export function getCharacterExpressionSet(characterId) {
     const settings = getSettings();
     const assignment = settings.characterAssignments?.find(a => a.characterId === characterId);
-    return assignment?.expressionSet || DEFAULT_EXPRESSION_SET;
+    return assignment?.expressionSet ?? DEFAULT_PLUS_EXPRESSION_SET;
 }
 
 /**
