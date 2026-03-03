@@ -378,6 +378,9 @@ async function showRuleEditor(ruleId) {
                 <div class="rule_editor_field">
                     <label>Conditions</label>
                     <div id="rule_editor_conditions"></div>
+                    <button class="menu_button" id="rule_editor_add_condition">
+                        <i class="fa-solid fa-plus"></i> <span>Add Condition</span>
+                    </button>
                     <div id="rule_editor_combination_settings" style="display: none;">
                         <div class="combination_diff_container">
                             <label>Maximum % difference between emotions to trigger:</label>
@@ -386,9 +389,6 @@ async function showRuleEditor(ruleId) {
                             <small>e.g., 25% means if the highest emotion is at 10%, all others must be at least 7.5%</small>
                         </div>
                     </div>
-                    <button class="menu_button" id="rule_editor_add_condition">
-                        <i class="fa-solid fa-plus"></i> <span>Add Condition</span>
-                    </button>
                 </div>
             </div>
         `;

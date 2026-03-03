@@ -8,7 +8,7 @@
     "js": "index.js",
     "css": "style.css",
     "author": "Tyranomaster",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "homePage": "https://github.com/Tyranomaster/expressions-plus",
     "description": "Advanced expression system with customizable emotion rules, profiles, and complex emotion detection."
 }

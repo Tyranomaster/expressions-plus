@@ -3,6 +3,7 @@
  * Handles user-configured sprite folder sets (subfolders) for characters
  */
 
+import { getRequestHeaders } from '../../../../../script.js';
 import { getSettings } from './settings.js';
 import { DEFAULT_EXPRESSION_SET, DEFAULT_PLUS_EXPRESSION_SET } from './constants.js';
 
@@ -33,7 +34,7 @@ export function getExpressionSets(characterId) {
     for (const folderName of configuredSets) {
         if (folderName && folderName.trim()) {
             if (!sets.some(set => set.folder === folderName)) {
-                sets.push({ name: folderName, folder: folderName });
+                sets.push({ name: `\u{1F4C1} ${folderName}`, folder: folderName });
             }
         }
     }
@@ -116,7 +117,9 @@ export function removeExpressionSet(characterId, folderName) {
 export async function validateExpressionSetFolder(characterId, folderName) {
     try {
         const path = folderName ? `${characterId}/${folderName}` : characterId;
-        const result = await fetch(`/api/sprites/get?name=${encodeURIComponent(path)}`);
+        const result = await fetch(`/api/sprites/get?name=${encodeURIComponent(path)}`, {
+            headers: getRequestHeaders(),
+        });
         
         if (result.ok) {
             const sprites = await result.json();

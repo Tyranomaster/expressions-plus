@@ -180,6 +180,21 @@
                 </div>
                 <div class="flex-container alignItemsCenter">
                     <strong>Sprite set:</strong>&nbsp;<span id="expressions_plus_image_list_header_name"></span>
+                    <small id="expressions_plus_image_list_header_path" style="margin-left: 0.5em; opacity: 0.6;"></small>
+                </div>
+                <div class="flex-container gap5px marginTop5">
+                    <div id="expressions_plus_export_folder" class="menu_button menu_button_icon flex1" title="Export the current sprite folder as a flat ZIP">
+                        <i class="fa-solid fa-file-zipper"></i>
+                        <span>Export Folder</span>
+                    </div>
+                    <div id="expressions_plus_export_all" class="menu_button menu_button_icon flex1" title="Export all sprites (base + subfolders) as a sprite pack ZIP">
+                        <i class="fa-solid fa-file-export"></i>
+                        <span>Export All</span>
+                    </div>
+                    <div id="expressions_plus_import_sprites" class="menu_button menu_button_icon flex1" title="Import a sprite pack ZIP">
+                        <i class="fa-solid fa-file-import"></i>
+                        <span>Import Pack</span>
+                    </div>
                 </div>
                 <div id="expresssions_plus_image_list"></div>
             </div>
@@ -188,5 +203,8 @@
     
     <form style="display: none;">
         <input type="file" id="expressions_plus_upload" accept="image/*">
+    </form>
+    <form style="display: none;">
+        <input type="file" id="expressions_plus_upload_zip" accept=".zip">
     </form>
 </div>

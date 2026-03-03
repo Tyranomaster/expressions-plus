@@ -67,6 +67,8 @@ Organize multiple sprite collections per character and switch between them:
 2. Place sprites in each subfolder — the base folder serves as the "Default" set
 3. Switch sets via the **Character Assignments** dropdown, the **Wand Menu** (magic wand icon in chat), or the `/explus-expressionset` slash command
 4. Bundle a profile in the folder for the optional profile from folder override.
+5. Export/Import Expression sets, compatible (and reverse compatible!) with base expressions extension ZIP files.
+6. Expression-Plus expression set exports can be used in the base expressions module, but will add extra bulk to that is unusable (but is reverse compatible. Either export individual subfolder, or ensure that there is a set of sprites in base folder for reverse compatibility).
 
 ### Folder Profiles
 

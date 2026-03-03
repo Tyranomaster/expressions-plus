@@ -139,6 +139,15 @@ import {
     initAnalyticsSettings,
 } from './src/ui-analytics.js';
 
+import {
+    exportCurrentFolder,
+    exportSpritePack,
+    importSpritePack,
+    checkAndReconstructSpritePack,
+    setValidateImagesFn as setSpritePackValidateImagesFn,
+    setRenderCharacterAssignmentsFn as setSpritePackRenderCharacterAssignmentsFn,
+} from './src/sprite-pack.js';
+
 export { MODULE_NAME };
 
 export { lastExpression };
@@ -203,6 +212,10 @@ setSlashGetExpressionLabelFn(getExpressionLabel);
 setRenderProfileSelectorFn(renderProfileSelector);
 setSlashRenderRulesListFn(() => renderRulesList());
 setSlashRenderCharacterAssignmentsFn(() => renderCharacterAssignments());
+
+// Wire up sprite-pack.js dependencies
+setSpritePackValidateImagesFn(validateImages);
+setSpritePackRenderCharacterAssignmentsFn(() => renderCharacterAssignments());
 
 // ============================================================================
 // Fallback Expression Picker
@@ -302,6 +315,10 @@ async function addSettings() {
     $(document).on('click', '.expression_plus_list_item', onClickExpressionImage);
     $(document).on('click', '.expression_plus_list_upload', onClickExpressionUpload);
     $(document).on('click', '.expression_plus_list_delete', onClickExpressionDelete);
+
+    $('#expressions_plus_export_folder').on('click', exportCurrentFolder);
+    $('#expressions_plus_export_all').on('click', exportSpritePack);
+    $('#expressions_plus_import_sprites').on('click', importSpritePack);
 
     await renderFallbackExpressionPicker();
     renderProfileSelector();
@@ -492,6 +509,14 @@ function addVisualNovelMode() {
         }
 
         renderCharacterAssignments();
+
+        // Check for sprite pack manifest and reconstruct if needed (fire-and-forget)
+        checkAndReconstructSpritePack().then(reconstructed => {
+            if (reconstructed) {
+                renderCharacterAssignments();
+                updateFunction({ newChat: true });
+            }
+        }).catch(err => console.error('Expressions+: Reconstruction error:', err));
 
         updateFunction({ newChat: true });
     });

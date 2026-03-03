@@ -105,6 +105,129 @@ export function onClickExpressionImage() {
     sendExpressionCall(spriteFolderName, expression, { force: true });
 }
 
+// ============================================================================
+// Sprite Upload Helpers
+// ============================================================================
+
+/**
+ * Generates a unique sprite name by incrementing a suffix until no collision.
+ * e.g., joy → joy-1, joy-2, etc.
+ * @param {string} expression - Base expression name
+ * @param {import('./constants.js').ExpressionImage[]} existingFiles - Files already present for this expression
+ * @returns {string}
+ */
+function generateUniqueSpriteName(expression, existingFiles) {
+    let index = existingFiles.length;
+    let candidate;
+    do {
+        candidate = `${expression}-${index++}`;
+    } while (existingFiles.some(f => f.title === candidate));
+    return candidate;
+}
+
+/**
+ * Validates that a sprite name matches the expected pattern for an expression.
+ * Valid: expression, expression-1, expression.alt, expression-foo
+ * @param {string} expression - The base expression label
+ * @param {string} spriteName - The proposed sprite name
+ * @returns {boolean}
+ */
+function validateSpriteName(expression, spriteName) {
+    const regex = new RegExp(`^${expression}(?:[-\\.].*)?$`);
+    return regex.test(spriteName);
+}
+
+/**
+ * Handles the core sprite upload logic with duplicate detection.
+ * Shows overwrite / add duplicate / rename prompt if a sprite already exists.
+ * @param {File} file - The image file to upload
+ * @param {string} expression - The target expression label
+ * @param {string} name - The character sprite folder name
+ */
+async function uploadSpriteWithDuplicateCheck(file, expression, name) {
+    const existingFiles = spriteCache[name]?.find(x => x.label === expression)?.files || [];
+    const hasExisting = existingFiles.some(f => f.type === 'success' || f.type === 'additional');
+
+    let spriteName = expression;
+
+    if (hasExisting) {
+        const { Popup, POPUP_RESULT } = await import('../../../../popup.js');
+
+        const suggestedDupeName = generateUniqueSpriteName(expression, existingFiles);
+
+        // Use an action callback for Overwrite, because Popup.show.input
+        // returns the input field text (string) for any result >= AFFIRMATIVE.
+        spriteName = null;
+
+        /** @type {import('../../../../popup.js').CustomPopupButton[]} */
+        const customButtons = [
+            {
+                text: 'Overwrite',
+                result: POPUP_RESULT.NEGATIVE,
+                action: () => { spriteName = expression; },
+                classes: ['menu_button'],
+            },
+        ];
+
+        const input = await Popup.show.input(
+            'Upload Expression Sprite',
+            `<p>A sprite already exists for <b>${expression}</b> (${existingFiles.length} file(s)).</p>` +
+            '<p><b>Overwrite</b> replaces the primary sprite. ' +
+            '<b>Save as Duplicate</b> uses the name below (editable).</p>',
+            suggestedDupeName,
+            { okButton: 'Save as Duplicate', customButtons },
+        );
+
+        if (input) {
+            // "Save as Duplicate" returns the input field text
+            const trimmed = String(input).trim();
+            if (!trimmed) return;
+            if (!validateSpriteName(expression, trimmed)) {
+                toast.warning(`Invalid sprite name. It must start with "${expression}" (e.g., ${expression}-alt, ${expression}.v2)`);
+                return;
+            }
+            spriteName = trimmed;
+        }
+
+        // If spriteName is still null, the user cancelled
+        if (!spriteName) {
+            return;
+        }
+    }
+
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('label', expression);
+    formData.append('avatar', file);
+    formData.append('spriteName', spriteName);
+
+    try {
+        const result = await fetch('/api/sprites/upload', {
+            method: 'POST',
+            headers: getRequestHeaders({ omitContentType: true }),
+            body: formData,
+        });
+
+        if (!result.ok) {
+            const text = await result.text();
+            throw new Error(text || `Server returned ${result.status}`);
+        }
+
+        delete spriteCache[name];
+        if (validateImages) {
+            await validateImages(name, true);
+        }
+        toast.success(`Uploaded sprite for ${expression} as "${spriteName}"`);
+    } catch (error) {
+        console.error('Upload error:', error);
+        toast.error(`Failed to upload sprite: ${error.message}`);
+    }
+}
+
+// ============================================================================
+// Click Upload
+// ============================================================================
+
 /**
  * Handles expression upload
  * @param {Event} event 
@@ -120,27 +243,7 @@ export async function onClickExpressionUpload(event) {
         const file = e.target.files[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('label', expression);
-        formData.append('avatar', file);
-        formData.append('spriteName', expression);
-
-        try {
-            await fetch('/api/sprites/upload', {
-                method: 'POST',
-                body: formData,
-            });
-            
-            delete spriteCache[name];
-            if (validateImages) {
-                await validateImages(name, true);
-            }
-            toast.success(`Uploaded sprite for ${expression}`);
-        } catch (error) {
-            console.error('Upload error:', error);
-            toast.error('Failed to upload sprite');
-        }
+        await uploadSpriteWithDuplicateCheck(file, expression, name);
 
         e.target.form.reset();
     };
@@ -189,6 +292,64 @@ export async function onClickExpressionDelete(event) {
     } catch (error) {
         toast.error('Failed to delete image');
     }
+}
+
+// ============================================================================
+// Drag-and-Drop Upload
+// ============================================================================
+
+/**
+ * Handles dragover on an expression list item to show visual feedback
+ * @param {DragEvent} event 
+ */
+export function onExpressionDragOver(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'copy';
+    }
+    $(this).closest('.expression_plus_list_item').addClass('expression_plus_drop_target');
+}
+
+/**
+ * Handles dragleave on an expression list item to remove visual feedback
+ * @param {DragEvent} event 
+ */
+export function onExpressionDragLeave(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    // Only remove if we're actually leaving the item (not entering a child)
+    const item = $(this).closest('.expression_plus_list_item')[0];
+    if (item && !item.contains(/** @type {Node} */ (event.relatedTarget))) {
+        $(item).removeClass('expression_plus_drop_target');
+    }
+}
+
+/**
+ * Handles dropping an image file on an expression list item
+ * @param {DragEvent} event 
+ */
+export async function onExpressionDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const expressionListItem = $(this).closest('.expression_plus_list_item');
+    expressionListItem.removeClass('expression_plus_drop_target');
+
+    const files = event.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+        toast.warning('Only image files can be uploaded as sprites');
+        return;
+    }
+
+    const expression = expressionListItem.data('expression');
+    const name = $('#expresssions_plus_image_list').data('name');
+    if (!expression || !name) return;
+
+    await uploadSpriteWithDuplicateCheck(file, expression, name);
 }
 
 // ============================================================================

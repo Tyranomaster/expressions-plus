@@ -8,12 +8,13 @@ import { power_user } from '../../../../power-user.js';
 import { isMobile } from '../../../../RossAscends-mods.js';
 import { debounce_timeout } from '../../../../constants.js';
 import { debounce } from '../../../../utils.js';
-import { system_message_types } from '../../../../../script.js';
+import { system_message_types, getRequestHeaders } from '../../../../../script.js';
 
 import { RESET_SPRITE_LABEL, RULE_TYPE, DEFAULT_EXPRESSION_SET, DEFAULT_PLUS_EXPRESSION_SET } from './constants.js';
 import { spriteCache, currentSpriteFolderName } from './state.js';
 import { getSettings } from './settings.js';
 import { getActiveProfileWithFolderOverride } from './profiles.js';
+import { onExpressionDragOver, onExpressionDragLeave, onExpressionDrop } from './ui-handlers.js';
 
 let getExpressionsList = null;
 let updateVisualNovelMode = null;
@@ -131,7 +132,9 @@ export function getExpressionImageData(sprite) {
  */
 export async function getSpritesList(name) {
     try {
-        const result = await fetch(`/api/sprites/get?name=${encodeURIComponent(name)}`);
+        const result = await fetch(`/api/sprites/get?name=${encodeURIComponent(name)}`, {
+            headers: getRequestHeaders(),
+        });
         let sprites = result.ok ? (await result.json()) : [];
 
         const grouped = sprites.reduce((acc, sprite) => {
@@ -340,14 +343,18 @@ export async function drawSpritesList(spriteFolderName, labels, sprites, createL
     $('#expressions_plus_open_chat').show();
     $('#expresssions_plus_image_list').empty();
     $('#expresssions_plus_image_list').data('name', spriteFolderName);
-    $('#expressions_plus_image_list_header_name').text(spriteFolderName);
+    const isSubfolder = spriteFolderName.includes('/');
+    $('#expressions_plus_image_list_header_name').text(isSubfolder ? spriteFolderName.split('/').pop() : spriteFolderName);
+    $('#expressions_plus_image_list_header_path').text(isSubfolder ? `characters/${spriteFolderName}/` : '');
 
     if (!Array.isArray(labels)) return [];
 
     const profile = getActiveProfileWithFolderOverride(currentSpriteFolderName);
-    const customExpressionNames = profile.rules
-        .filter(r => r.type !== RULE_TYPE.SIMPLE)
-        .map(r => r.name);
+    const customExpressionNames = profile.isDefault
+        ? []
+        : profile.rules
+            .filter(r => r.type !== RULE_TYPE.SIMPLE)
+            .map(r => r.name);
     
     const settings = getSettings();
     const userCustomExpressions = settings.custom || [];
@@ -375,6 +382,15 @@ export async function drawSpritesList(spriteFolderName, labels, sprites, createL
         const html = createListItemHtml(expression, images, isCustom);
         $('#expresssions_plus_image_list').append(html);
     }
+
+    // Bind drag-and-drop handlers directly to each list item.
+    // Must be direct (not delegated) because SillyTavern's body-level DragAndDropHandler
+    // calls stopPropagation(), which blocks document-delegated drag events.
+    $('#expresssions_plus_image_list .expression_plus_list_item').each(function () {
+        this.addEventListener('dragover', onExpressionDragOver);
+        this.addEventListener('dragleave', onExpressionDragLeave);
+        this.addEventListener('drop', onExpressionDrop);
+    });
 
     return validExpressions;
 }

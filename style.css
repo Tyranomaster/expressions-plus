@@ -469,6 +469,13 @@ img.expression-plus.default {
     color: var(--fullred);
 }
 
+.expression_plus_list_item.expression_plus_drop_target {
+    outline: 2px dashed var(--active);
+    outline-offset: -2px;
+    background-color: color-mix(in srgb, var(--active) 15%, transparent) !important;
+    transition: outline 0.15s ease, background-color 0.15s ease;
+}
+
 #expressions_plus_insight_panel {
     position: fixed;
     right: 10px;
