@@ -249,7 +249,7 @@
       },
       {
         "id": "rule_1770878584535_sowmf3aih",
-        "name": "exhileration",
+        "name": "exhilaration",
         "type": "combination",
         "conditions": [
           {
@@ -425,6 +425,114 @@
           },
           {
             "emotion": "excitement",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1774559679983_xfax1bj0x",
+        "name": "panic",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "confusion",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "fear",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1774559661677_odl3jclk0",
+        "name": "reverence",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "admiration",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "gratitude",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1774559645879_ggk4t6pxg",
+        "name": "tenderness",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "caring",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "love",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          }
+        ],
+        "enabled": true,
+        "maxDifference": 0.25
+      },
+      {
+        "id": "rule_1774559627927_hg7gl0op6",
+        "name": "trepidation",
+        "type": "combination",
+        "conditions": [
+          {
+            "emotion": "excitement",
+            "minScore": 0,
+            "maxScore": 1,
+            "minEnabled": false,
+            "maxEnabled": false,
+            "minInclusive": false,
+            "maxInclusive": false
+          },
+          {
+            "emotion": "nervousness",
             "minScore": 0,
             "maxScore": 1,
             "minEnabled": false,

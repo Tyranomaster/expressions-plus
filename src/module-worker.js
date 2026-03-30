@@ -11,6 +11,7 @@ import {
     lastMessage,
     spriteCache,
     lastServerResponseTime,
+    lastScenarioDetected,
     setExpressionsList,
     setLastCharacter,
     setLastMessage,
@@ -86,7 +87,11 @@ export async function moduleWorker({ newChat = false } = {}) {
     const vnMode = isVisualNovelMode();
     const vnWrapperVisible = $('#visual-novel-plus-wrapper').is(':visible');
 
-    if (vnMode) {
+    // Scenario mode uses the VN wrapper for multi-sprite display even outside group chats.
+    // Don't hide it if the previous cycle was scenario mode (sendExpressionCall manages wrappers).
+    const effectiveVnMode = vnMode || lastScenarioDetected;
+
+    if (effectiveVnMode) {
         $('#expression-plus-wrapper').hide();
         $('#visual-novel-plus-wrapper').show();
     } else {
@@ -94,11 +99,14 @@ export async function moduleWorker({ newChat = false } = {}) {
         $('#visual-novel-plus-wrapper').hide();
     }
 
-    const vnStateChanged = vnMode !== vnWrapperVisible;
+    const vnStateChanged = effectiveVnMode !== vnWrapperVisible;
 
     if (vnStateChanged) {
         setLastMessage(null);
-        $('#visual-novel-plus-wrapper').empty();
+        // Only empty VN wrapper if not transitioning into scenario mode
+        if (!lastScenarioDetected) {
+            $('#visual-novel-plus-wrapper').empty();
+        }
         $('#expression-plus-holder').css({ top: '', left: '', right: '', bottom: '', height: '', width: '', margin: '' });
     }
 
@@ -165,7 +173,7 @@ export async function moduleWorker({ newChat = false } = {}) {
     try {
         let expression = null;
         if (getExpressionLabel) {
-            expression = await getExpressionLabel(currentLastMessage.mes);
+            expression = await getExpressionLabel(currentLastMessage.mes, currentLastMessage.name);
         }
 
         if (spriteFolderName === currentLastMessage.name && !context.groupId) {

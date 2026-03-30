@@ -29,10 +29,10 @@ export const DEFAULT_PROFILE_ID = 'default';
 export const DEFAULT_PLUS_PROFILE_ID = 'default_plus';
 export const DEFAULT_PLUS_PROFILE_NAME = 'Default +';
 export const DEFAULT_ACTIVE_PROFILE_ID = DEFAULT_PLUS_PROFILE_ID;
-export const DEFAULT_EXPRESSION_SET = ''; // Empty string represents base folder
+export const DEFAULT_EXPRESSION_SET = '';
 export const DEFAULT_PLUS_EXPRESSION_SET = 'default-plus';
 export const FOLDER_PROFILE_FILENAME = 'expressions-plus-profile.json';
-export const FOLDER_PROFILE_CACHE_TTL = 60000; // 60 seconds
+export const FOLDER_PROFILE_CACHE_TTL = 60000;
 
 /** @enum {number} */
 export const EXPRESSION_API = {
@@ -44,12 +44,47 @@ export const EXPRESSION_API = {
  * @enum {string}
  */
 export const RULE_TYPE = {
-    /** Single emotion with no threshold constraints (base behavior) */
     SIMPLE: 'simple',
-    /** Single emotion within a configurable range (can emulate above/below/range) */
     RANGE: 'range',
-    /** Multiple emotions that are close in value */
     COMBINATION: 'combination',
+};
+
+/**
+ * Splitting strategies for multi-segment classification
+ * @enum {string}
+ */
+export const SPLIT_STRATEGY = {
+    PARAGRAPH: 'paragraph',
+    SENTENCE: 'sentence',
+    HYBRID: 'hybrid',
+};
+
+/** Default sample size (characters) for classifier input.
+ *  DistilBERT accepts up to 512 tokens; 1600 chars is a conservative
+ *  character-level cap that avoids exceeding the token limit. */
+export const DEFAULT_SAMPLE_SIZE = 1600;
+
+/**
+ * Built-in scenario chat detection patterns
+ * @enum {string}
+ */
+export const SCENARIO_PATTERN = {
+    BOLD_MARKDOWN: 'bold_markdown',
+    PLAIN_COLON: 'plain_colon',
+    ITALIC_MARKDOWN: 'italic_markdown',
+    CUSTOM: 'custom',
+};
+
+/**
+ * Built-in filter IDs
+ * @enum {string}
+ */
+export const BUILTIN_FILTER = {
+    OOC: 'builtin_ooc',
+    EXTENSIONS: 'builtin_extensions',
+    HTML: 'builtin_html',
+    EMOJI: 'builtin_emoji',
+    RP_MARKUP: 'builtin_rp_markup',
 };
 
 // ============================================================================
@@ -120,4 +155,61 @@ export const RULE_TYPE = {
  * @property {string} title - The title for the image
  * @property {string} imageSrc - The image source / full path
  * @property {'success' | 'additional' | 'failure' | 'default'} type - The type of the image
+ */
+
+/**
+ * @typedef {Object} TextFilter
+ * @property {string} id - Unique identifier for the filter
+ * @property {string} name - Display name
+ * @property {string} [description] - Human-readable description of what the filter removes
+ * @property {string} pattern - Regex pattern string
+ * @property {string} [flags='gi'] - Regex flags
+ * @property {string} [replacement=''] - Replacement string (default: empty = remove)
+ * @property {boolean} enabled - Whether the filter is active
+ * @property {boolean} [isBuiltIn=false] - Whether this is a built-in filter
+ */
+
+/**
+ * @typedef {Object} TextSegment
+ * @property {string} text - The segment text content
+ * @property {number} startIndex - Start character index in the filtered text
+ * @property {number} endIndex - End character index in the filtered text
+ * @property {number} [originalStartIndex] - Start character index in the original (pre-filter) text
+ * @property {number} [originalEndIndex] - End character index in the original (pre-filter) text
+ */
+
+/**
+ * @typedef {Object} SegmentResult
+ * @property {TextSegment} segment - The text segment
+ * @property {EmotionScore[]} scores - Classification scores for this segment
+ * @property {string} expression - The selected expression for this segment
+ * @property {number} score - The normalized score of the selected expression
+ * @property {boolean} isCustom - Whether the expression came from a custom rule
+ * @property {string|null} ruleId - The matched rule ID (if any)
+ * @property {string} [originalText] - The original (pre-filter) text for annotation purposes
+ */
+
+/**
+ * @typedef {Object} FilterPreset
+ * @property {string} type - Always 'expressions-plus-filters'
+ * @property {number} version - Preset format version
+ * @property {Object} builtInStates - Map of built-in filter ID → enabled boolean
+ * @property {TextFilter[]} customFilters - Array of custom filter definitions
+ */
+
+/**
+ * @typedef {Object} ScenarioSegment
+ * @property {string} characterName - The detected character name
+ * @property {string} text - The character's dialogue/text content
+ * @property {number} startIndex - Start character index in the original message
+ * @property {number} endIndex - End character index in the original message
+ */
+
+/**
+ * @typedef {Object} ScenarioPattern
+ * @property {string} id - Pattern identifier (matches SCENARIO_PATTERN enum)
+ * @property {string} name - Human-readable pattern name
+ * @property {string} description - Description with format example
+ * @property {string} pattern - Regex pattern string (must have one capture group for character name)
+ * @property {string} flags - Regex flags
  */

@@ -17,6 +17,9 @@ import {
     DEFAULT_PLUS_EXPRESSION_SET,
     EXPRESSION_API,
     RULE_TYPE,
+    SPLIT_STRATEGY,
+    DEFAULT_SAMPLE_SIZE,
+    BUILTIN_FILTER,
 } from './constants.js';
 
 const BUILT_IN_PROFILE_DEFINITIONS = [
@@ -129,7 +132,36 @@ export function getDefaultSettings() {
         prioritizeFolderProfiles: true,
         
         analyticsEnabled: false,
-        analyticsEmotionCount: 'both', // 2, 3, or 'both'
+        analyticsEmotionCount: 'both',
+
+        sampleSize: DEFAULT_SAMPLE_SIZE,
+        splitStrategy: SPLIT_STRATEGY.HYBRID,
+        filtersBuiltIn: {
+            [BUILTIN_FILTER.OOC]: true,
+            [BUILTIN_FILTER.EXTENSIONS]: true,
+            [BUILTIN_FILTER.HTML]: true,
+            [BUILTIN_FILTER.EMOJI]: false,
+            [BUILTIN_FILTER.RP_MARKUP]: false,
+        },
+        filtersCustom: [],
+
+        multiSegmentEnabled: true,
+
+        highlightColors: ['#3B82F6', '#A855F7', '#22C55E', '#F97316', '#EC4899', '#EAB308'],
+        highlightOpacityInactive: 0.10,
+        highlightOpacityActive: 0.25,
+
+        scenarioEnabled: false,
+        scenarioPatterns: {
+            bold_markdown: true,
+            plain_colon: false,
+            italic_markdown: false,
+        },
+        scenarioCustomEnabled: false,
+        scenarioCustomRegex: '',
+        scenarioCustomFlags: 'gm',
+
+        characterLayouts: {},
     };
 }
 
@@ -314,7 +346,6 @@ export async function migrateSettings() {
         saveSettingsDebounced();
     }
 
-    // One-time migration: rename Default profile to Default (Legacy)
     if (!settings._defaultLegacyRenameMigrationApplied) {
         const defaultProfile = settings.profiles.find(p => p.id === DEFAULT_PROFILE_ID);
         if (defaultProfile && defaultProfile.name === 'Default') {
@@ -324,14 +355,12 @@ export async function migrateSettings() {
         saveSettingsDebounced();
     }
 
-    // One-time migration: enable showDefault (Default+ smiley fallback) for existing users
     if (!settings._showDefaultMigrationApplied) {
         settings.showDefault = true;
         settings._showDefaultMigrationApplied = true;
         saveSettingsDebounced();
     }
 
-    // Ensure Default+ profile is first in the profiles array
     const defaultPlusIndex = settings.profiles.findIndex(p => p.id === DEFAULT_PLUS_PROFILE_ID);
     if (defaultPlusIndex > 0) {
         const [defaultPlusProfile] = settings.profiles.splice(defaultPlusIndex, 1);
@@ -339,10 +368,93 @@ export async function migrateSettings() {
         saveSettingsDebounced();
     }
     
-    // Migrate debugMode to insightMode
     if (settings.debugMode !== undefined && settings.insightMode === undefined) {
         settings.insightMode = settings.debugMode;
         delete settings.debugMode;
+        saveSettingsDebounced();
+    }
+
+    if (!settings._v040FilterMigrationApplied) {
+        const defaults = getDefaultSettings();
+
+        if (settings.sampleSize === undefined) {
+            settings.sampleSize = defaults.sampleSize;
+        }
+        if (settings.splitStrategy === undefined) {
+            settings.splitStrategy = defaults.splitStrategy;
+        }
+        if (settings.filtersBuiltIn === undefined) {
+            settings.filtersBuiltIn = defaults.filtersBuiltIn;
+        }
+        if (!Array.isArray(settings.filtersCustom)) {
+            settings.filtersCustom = [];
+        }
+        if (settings.multiSegmentEnabled === undefined) {
+            settings.multiSegmentEnabled = defaults.multiSegmentEnabled;
+        }
+
+        settings._v040FilterMigrationApplied = true;
+        saveSettingsDebounced();
+    }
+
+    if (settings.filtersBuiltIn && settings.filtersBuiltIn[BUILTIN_FILTER.RP_MARKUP] === undefined) {
+        settings.filtersBuiltIn[BUILTIN_FILTER.RP_MARKUP] = false;
+        saveSettingsDebounced();
+    }
+
+    if (!settings._v040HighlightMigrationApplied) {
+        const defaults = getDefaultSettings();
+
+        if (!Array.isArray(settings.highlightColors)) {
+            settings.highlightColors = defaults.highlightColors;
+        }
+        if (settings.highlightOpacityInactive === undefined) {
+            settings.highlightOpacityInactive = defaults.highlightOpacityInactive;
+        }
+        if (settings.highlightOpacityActive === undefined) {
+            settings.highlightOpacityActive = defaults.highlightOpacityActive;
+        }
+
+        settings._v040HighlightMigrationApplied = true;
+        saveSettingsDebounced();
+    }
+
+    if (!settings._v040ScenarioMigrationApplied) {
+        const defaults = getDefaultSettings();
+
+        if (settings.scenarioEnabled === undefined) {
+            settings.scenarioEnabled = defaults.scenarioEnabled;
+        }
+        if (settings.scenarioCustomRegex === undefined) {
+            settings.scenarioCustomRegex = defaults.scenarioCustomRegex;
+        }
+        if (settings.scenarioCustomFlags === undefined) {
+            settings.scenarioCustomFlags = defaults.scenarioCustomFlags;
+        }
+
+        // Migrate from old single-select scenarioPatternId to multi-toggle scenarioPatterns
+        if (settings.scenarioPatternId !== undefined && settings.scenarioPatterns === undefined) {
+            const oldId = settings.scenarioPatternId;
+            settings.scenarioPatterns = { ...defaults.scenarioPatterns };
+            if (oldId === 'custom') {
+                settings.scenarioCustomEnabled = true;
+            } else if (settings.scenarioPatterns[oldId] !== undefined) {
+                // Enable only the previously selected pattern
+                for (const key of Object.keys(settings.scenarioPatterns)) {
+                    settings.scenarioPatterns[key] = (key === oldId);
+                }
+            }
+            delete settings.scenarioPatternId;
+        }
+
+        if (settings.scenarioPatterns === undefined) {
+            settings.scenarioPatterns = defaults.scenarioPatterns;
+        }
+        if (settings.scenarioCustomEnabled === undefined) {
+            settings.scenarioCustomEnabled = defaults.scenarioCustomEnabled;
+        }
+
+        settings._v040ScenarioMigrationApplied = true;
         saveSettingsDebounced();
     }
 }

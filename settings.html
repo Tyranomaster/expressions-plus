@@ -66,67 +66,317 @@
 
             <hr>
 
-            <div class="flex-container justifySpaceBetween alignItemsCenter">
-                <label for="expressions_plus_profile_select">Active Profile</label>
-                <div class="flex-container gap5px">
-                    <div id="expressions_plus_profile_create" class="menu_button menu_button_icon" title="Create Profile">
-                        <i class="fa-solid fa-plus"></i>
-                    </div>
-                    <div id="expressions_plus_profile_edit" class="menu_button menu_button_icon" title="Rename Profile">
-                        <i class="fa-solid fa-pencil"></i>
-                    </div>
-                    <div id="expressions_plus_profile_delete" class="menu_button menu_button_icon" title="Delete Profile">
-                        <i class="fa-solid fa-trash"></i>
-                    </div>
-                    <div id="expressions_plus_profile_export" class="menu_button menu_button_icon" title="Export Profile">
-                        <i class="fa-solid fa-file-export"></i>
-                    </div>
-                    <div id="expressions_plus_profile_export_folder" class="menu_button menu_button_icon" title="Export profile for sprite folder (fixed filename for sharing)">
-                        <i class="fa-solid fa-folder-open"></i>
-                    </div>
-                    <div id="expressions_plus_profile_import" class="menu_button menu_button_icon" title="Import Profile">
-                        <i class="fa-solid fa-file-import"></i>
-                    </div>
+            <div class="expressions_plus_collapsible">
+                <div class="flex-container justifySpaceBetween alignItemsCenter section_toggle">
+                    <label>Text Preprocessing</label>
+                    <i class="fa-solid fa-chevron-down"></i>
                 </div>
-            </div>
-            <select id="expressions_plus_profile_select" class="text_pole"></select>
+                <div class="section_content" style="display: none;">
+                    <small>Configure how message text is cleaned and split before classification.</small>
 
-            <hr>
+                    <div class="flex-container flexFlowColumn marginTop5">
+                        <label for="expressions_plus_sample_size">Sample Size (characters)</label>
+                        <div class="flex-container gap5px alignItemsCenter">
+                            <input type="number" id="expressions_plus_sample_size" class="text_pole" min="50" max="1600" step="50" value="1600">
+                            <small>Max chars per segment sent to classifier (max 1600)</small>
+                        </div>
+                    </div>
 
-            <div id="expressions_plus_folder_profile_notice" class="folder_profile_notice" style="display: none;">
-                <i class="fa-solid fa-folder"></i>
-                <span id="expressions_plus_folder_profile_name"></span>
-            </div>
-            <div class="flex-container justifySpaceBetween alignItemsCenter">
-                <label>Custom Expression Rules</label>
-                <div class="flex-container gap5px">
-                    <div id="expressions_plus_sort_rules_asc" class="menu_button menu_button_icon" title="Sort A → Z">
-                        <i class="fa-solid fa-arrow-down-a-z"></i>
+                    <div class="flex-container flexFlowColumn marginTop5">
+                        <label for="expressions_plus_split_strategy">Splitting Strategy</label>
+                        <select id="expressions_plus_split_strategy" class="text_pole">
+                            <option value="hybrid">Hybrid (recommended)</option>
+                            <option value="paragraph">Paragraph</option>
+                            <option value="sentence">Sentence</option>
+                        </select>
+                        <small>How long messages are split into segments for classification.</small>
                     </div>
-                    <div id="expressions_plus_sort_rules_desc" class="menu_button menu_button_icon" title="Sort Z → A">
-                        <i class="fa-solid fa-arrow-down-z-a"></i>
+
+                    <label class="checkbox_label marginTop5" for="expressions_plus_multi_segment" title="When enabled, long messages are split into segments and each is classified independently. A carousel control lets you switch between segment sprites.">
+                        <input id="expressions_plus_multi_segment" type="checkbox">
+                        <span>Enable multi-segment classification</span>
+                    </label>
+
+                    <hr>
+
+                    <label class="marginTop5"><strong>Highlight Colors &amp; Opacity</strong></label>
+                    <small>Customize the colors used to highlight each segment in chat messages.</small>
+
+                    <div class="flex-container gap5px flexFlowRow flexWrap marginTop5" id="expressions_plus_highlight_colors">
+                        <div class="flex-container flexFlowColumn alignItemsCenter gap2px">
+                            <label><small>Slot 1</small></label>
+                            <input type="color" id="expressions_plus_highlight_color_0" value="#3B82F6" title="Segment 1 highlight color">
+                        </div>
+                        <div class="flex-container flexFlowColumn alignItemsCenter gap2px">
+                            <label><small>Slot 2</small></label>
+                            <input type="color" id="expressions_plus_highlight_color_1" value="#A855F7" title="Segment 2 highlight color">
+                        </div>
+                        <div class="flex-container flexFlowColumn alignItemsCenter gap2px">
+                            <label><small>Slot 3</small></label>
+                            <input type="color" id="expressions_plus_highlight_color_2" value="#22C55E" title="Segment 3 highlight color">
+                        </div>
+                        <div class="flex-container flexFlowColumn alignItemsCenter gap2px">
+                            <label><small>Slot 4</small></label>
+                            <input type="color" id="expressions_plus_highlight_color_3" value="#F97316" title="Segment 4 highlight color">
+                        </div>
+                        <div class="flex-container flexFlowColumn alignItemsCenter gap2px">
+                            <label><small>Slot 5</small></label>
+                            <input type="color" id="expressions_plus_highlight_color_4" value="#EC4899" title="Segment 5 highlight color">
+                        </div>
+                        <div class="flex-container flexFlowColumn alignItemsCenter gap2px">
+                            <label><small>Slot 6</small></label>
+                            <input type="color" id="expressions_plus_highlight_color_5" value="#EAB308" title="Segment 6 highlight color">
+                        </div>
                     </div>
-                    <div id="expressions_plus_add_rule" class="menu_button menu_button_icon">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Add Rule</span>
+
+                    <div class="flex-container flexFlowColumn marginTop5">
+                        <label for="expressions_plus_highlight_opacity_inactive">Inactive Opacity: <span id="expressions_plus_opacity_inactive_label">20%</span></label>
+                        <input type="range" id="expressions_plus_highlight_opacity_inactive" min="0" max="100" step="5" value="20" title="Opacity for inactive (non-selected) segment highlights">
                     </div>
+
+                    <div class="flex-container flexFlowColumn marginTop5">
+                        <label for="expressions_plus_highlight_opacity_active">Active Opacity: <span id="expressions_plus_opacity_active_label">40%</span></label>
+                        <input type="range" id="expressions_plus_highlight_opacity_active" min="0" max="100" step="5" value="40" title="Opacity for the currently selected segment highlight">
+                    </div>
+
+                    <div class="flex-container gap5px marginTop5">
+                        <div id="expressions_plus_highlight_reset" class="menu_button menu_button_icon" title="Reset highlight colors and opacity to defaults">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>Reset to Defaults</span>
+                        </div>
+                    </div>
+
+                    <div class="flex-container gap5px marginTop5">
+                        <div id="expressions_plus_inspect_classifier" class="menu_button menu_button_icon flex1" title="Inspect exactly what text is sent to the classifier after all preprocessing (filters, segmentation, sampling).">
+                            <i class="fa-solid fa-magnifying-glass-chart"></i>
+                            <span>Inspect Classifier Input</span>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <label class="marginTop5"><strong>Built-in Filters</strong></label>
+                    <small>Toggle built-in regex filters that clean common noise from classifier input.</small>
+
+                    <label class="checkbox_label marginTop5" for="expressions_plus_filter_builtin_ooc" title="Removes ((text)), [OOC: ...], OOC: prefixes, and similar out-of-character markers.">
+                        <input id="expressions_plus_filter_builtin_ooc" type="checkbox">
+                        <span>OOC Markers</span>
+                    </label>
+
+                    <label class="checkbox_label" for="expressions_plus_filter_builtin_extensions" title="Removes {{macros}}, XML-style <tags>, and common extension-injected patterns.">
+                        <input id="expressions_plus_filter_builtin_extensions" type="checkbox">
+                        <span>System/Extension Injections</span>
+                    </label>
+
+                    <label class="checkbox_label" for="expressions_plus_filter_builtin_html" title="Removes HTML entities, residual markdown formatting, and code blocks.">
+                        <input id="expressions_plus_filter_builtin_html" type="checkbox">
+                        <span>HTML/Formatting Artifacts</span>
+                    </label>
+
+                    <label class="checkbox_label" for="expressions_plus_filter_builtin_rp_markup" title="Removes asterisks (*) and double-quotes (&quot;) commonly used for RP action/narration formatting.">
+                        <input id="expressions_plus_filter_builtin_rp_markup" type="checkbox">
+                        <span>RP Markup (Asterisks &amp; Quotes)</span>
+                    </label>
+
+                    <label class="checkbox_label" for="expressions_plus_filter_builtin_emoji" title="Removes emoji and special unicode symbols from classifier input.">
+                        <input id="expressions_plus_filter_builtin_emoji" type="checkbox">
+                        <span>Emoji/Unicode Symbols</span>
+                    </label>
+
+                    <hr>
+
+                    <div class="flex-container justifySpaceBetween alignItemsCenter marginTop5">
+                        <label><strong>Custom Filters</strong></label>
+                        <div class="flex-container gap5px">
+                            <div id="expressions_plus_add_filter" class="menu_button menu_button_icon" title="Add Custom Filter">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Add</span>
+                            </div>
+                            <div id="expressions_plus_export_filters" class="menu_button menu_button_icon" title="Export Filter Preset">
+                                <i class="fa-solid fa-file-export"></i>
+                            </div>
+                            <div id="expressions_plus_import_filters" class="menu_button menu_button_icon" title="Import Filter Preset">
+                                <i class="fa-solid fa-file-import"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="expressions_plus_custom_filters_list" class="marginTop5"></div>
                 </div>
-            </div>
-            <div id="expressions_plus_rules_list"></div>
-            <div class="base_rules_info">
-                <small id="expressions_plus_base_rules_count"></small>
             </div>
 
             <hr>
 
             <div class="expressions_plus_collapsible">
                 <div class="flex-container justifySpaceBetween alignItemsCenter section_toggle">
-                    <label>Character Profile Assignments</label>
+                    <label>Scenario Chat</label>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="section_content" style="display: none;">
+                    <small>Detect multi-character dialogue within a single character card's messages (e.g., <code>**Char1**: text</code>). Each character is classified independently and shown in the carousel.</small>
+
+                    <label class="checkbox_label marginTop5" for="expressions_plus_scenario_enabled" title="When enabled, messages are scanned for character name markers. Each detected character's text is classified separately. Requires Visual Novel mode.">
+                        <input id="expressions_plus_scenario_enabled" type="checkbox">
+                        <span>Enable scenario chat detection</span>
+                    </label>
+                    <small><i class="fa-solid fa-circle-info"></i> Requires Visual Novel mode to be enabled.</small>
+
+                    <div class="flex-container flexFlowColumn marginTop5">
+                        <label>Detection Patterns</label>
+                        <small>Enable one or more patterns. All enabled patterns are combined (OR) for detection.</small>
+
+                        <label class="checkbox_label marginTop5" for="expressions_plus_scenario_pattern_bold" title="Matches **Character Name**: text">
+                            <input id="expressions_plus_scenario_pattern_bold" type="checkbox">
+                            <span>Bold Markdown — <code>**Name**: text</code></span>
+                        </label>
+                        <label class="checkbox_label" for="expressions_plus_scenario_pattern_plain" title="Matches CharacterName: text at the start of a line">
+                            <input id="expressions_plus_scenario_pattern_plain" type="checkbox">
+                            <span>Plain Colon — <code>Name: text</code> (at line start)</span>
+                        </label>
+                        <label class="checkbox_label" for="expressions_plus_scenario_pattern_italic" title="Matches *Character Name*: text">
+                            <input id="expressions_plus_scenario_pattern_italic" type="checkbox">
+                            <span>Italic Markdown — <code>*Name*: text</code></span>
+                        </label>
+
+                        <label class="checkbox_label marginTop5" for="expressions_plus_scenario_custom_enabled" title="Enable a custom regex pattern in addition to (or instead of) the built-in patterns.">
+                            <input id="expressions_plus_scenario_custom_enabled" type="checkbox">
+                            <span>Custom Regex</span>
+                        </label>
+                    </div>
+
+                    <div id="expressions_plus_scenario_custom_fields" style="display: none;">
+                        <div class="flex-container gap10px marginTop5">
+                            <div class="flex-container flexFlowColumn flex1">
+                                <label for="expressions_plus_scenario_custom_regex">Custom Regex Pattern</label>
+                                <input type="text" id="expressions_plus_scenario_custom_regex" class="text_pole" placeholder="e.g., \\*\\*(.+?)\\*\\*:\\s*">
+                                <small>Must contain one capture group <code>(...)</code> for the character name.</small>
+                            </div>
+                            <div class="flex-container flexFlowColumn">
+                                <label for="expressions_plus_scenario_custom_flags">Flags</label>
+                                <input type="text" id="expressions_plus_scenario_custom_flags" class="text_pole" style="width: 60px;" placeholder="gm" value="gm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-container gap5px marginTop10">
+                        <div id="expressions_plus_scenario_test" class="menu_button menu_button_icon flex1" title="Test pattern detection on the last character message">
+                            <i class="fa-solid fa-vial"></i>
+                            <span>Test Detection</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="expressions_plus_collapsible">
+                <div class="flex-container justifySpaceBetween alignItemsCenter section_toggle">
+                    <label>Emotion Profiles</label>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="section_content" style="display: none;">
+                    <small>Configure expression profiles and custom rules for emotion-to-expression mapping.</small>
+
+                    <div class="flex-container justifySpaceBetween alignItemsCenter marginTop5">
+                        <label for="expressions_plus_profile_select">Active Profile</label>
+                        <div class="flex-container gap5px">
+                            <div id="expressions_plus_profile_create" class="menu_button menu_button_icon" title="Create Profile">
+                                <i class="fa-solid fa-plus"></i>
+                            </div>
+                            <div id="expressions_plus_profile_edit" class="menu_button menu_button_icon" title="Rename Profile">
+                                <i class="fa-solid fa-pencil"></i>
+                            </div>
+                            <div id="expressions_plus_profile_delete" class="menu_button menu_button_icon" title="Delete Profile">
+                                <i class="fa-solid fa-trash"></i>
+                            </div>
+                            <div id="expressions_plus_profile_export" class="menu_button menu_button_icon" title="Export Profile">
+                                <i class="fa-solid fa-file-export"></i>
+                            </div>
+                            <div id="expressions_plus_profile_export_folder" class="menu_button menu_button_icon" title="Export profile for sprite folder (fixed filename for sharing)">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </div>
+                            <div id="expressions_plus_profile_import" class="menu_button menu_button_icon" title="Import Profile">
+                                <i class="fa-solid fa-file-import"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <select id="expressions_plus_profile_select" class="text_pole"></select>
+
+                    <hr>
+
+                    <div id="expressions_plus_folder_profile_notice" class="folder_profile_notice" style="display: none;">
+                        <i class="fa-solid fa-folder"></i>
+                        <span id="expressions_plus_folder_profile_name"></span>
+                    </div>
+                    <div class="flex-container justifySpaceBetween alignItemsCenter">
+                        <label>Custom Expression Rules</label>
+                        <div class="flex-container gap5px">
+                            <div id="expressions_plus_sort_rules_asc" class="menu_button menu_button_icon" title="Sort A → Z">
+                                <i class="fa-solid fa-arrow-down-a-z"></i>
+                            </div>
+                            <div id="expressions_plus_sort_rules_desc" class="menu_button menu_button_icon" title="Sort Z → A">
+                                <i class="fa-solid fa-arrow-down-z-a"></i>
+                            </div>
+                            <div id="expressions_plus_add_rule" class="menu_button menu_button_icon">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Add Rule</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="expressions_plus_rules_list"></div>
+                    <div class="base_rules_info">
+                        <small id="expressions_plus_base_rules_count"></small>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="expressions_plus_collapsible">
+                <div class="flex-container justifySpaceBetween alignItemsCenter section_toggle">
+                    <label>Character Profile Assignments / Sprite Set</label>
                     <i class="fa-solid fa-chevron-down"></i>
                 </div>
                 <div class="section_content" style="display: none;">
                     <small>Assign specific profiles to characters. Unassigned characters use the active profile.</small>
                     <div id="expressions_plus_character_assignments"></div>
+
+                    <hr>
+
+                    <div class="expressions_plus_collapsible" style="margin-left: 1em;">
+                        <div class="flex-container justifySpaceBetween alignItemsCenter section_toggle">
+                            <label>Sprite Set</label>
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </div>
+                        <div class="section_content">
+                            <div id="expressions_plus_no_chat">
+                                Open a chat to see the character expressions.
+                            </div>
+                            <div id="expressions_plus_open_chat" style="display: none;">
+                                <div class="offline_mode" style="display: none;">
+                                    <small>You are in offline mode. Click on the image below to set the expression.</small>
+                                </div>
+                                <div class="flex-container alignItemsCenter">
+                                    <strong>Sprite set:</strong>&nbsp;<span id="expressions_plus_image_list_header_name"></span>
+                                    <small id="expressions_plus_image_list_header_path" style="margin-left: 0.5em; opacity: 0.6;"></small>
+                                </div>
+                                <div class="flex-container gap5px marginTop5">
+                                    <div id="expressions_plus_export_folder" class="menu_button menu_button_icon flex1" title="Export the current sprite folder as a flat ZIP">
+                                        <i class="fa-solid fa-file-zipper"></i>
+                                        <span>Export Folder</span>
+                                    </div>
+                                    <div id="expressions_plus_export_all" class="menu_button menu_button_icon flex1" title="Export all sprites (base + subfolders) as a sprite pack ZIP">
+                                        <i class="fa-solid fa-file-export"></i>
+                                        <span>Export All</span>
+                                    </div>
+                                    <div id="expressions_plus_import_sprites" class="menu_button menu_button_icon flex1" title="Import a sprite pack ZIP">
+                                        <i class="fa-solid fa-file-import"></i>
+                                        <span>Import Pack</span>
+                                    </div>
+                                </div>
+                                <div id="expresssions_plus_image_list"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -167,36 +417,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <hr>
-
-            <div id="expressions_plus_no_chat">
-                Open a chat to see the character expressions.
-            </div>
-            <div id="expressions_plus_open_chat" style="display: none;">
-                <div class="offline_mode" style="display: none;">
-                    <small>You are in offline mode. Click on the image below to set the expression.</small>
-                </div>
-                <div class="flex-container alignItemsCenter">
-                    <strong>Sprite set:</strong>&nbsp;<span id="expressions_plus_image_list_header_name"></span>
-                    <small id="expressions_plus_image_list_header_path" style="margin-left: 0.5em; opacity: 0.6;"></small>
-                </div>
-                <div class="flex-container gap5px marginTop5">
-                    <div id="expressions_plus_export_folder" class="menu_button menu_button_icon flex1" title="Export the current sprite folder as a flat ZIP">
-                        <i class="fa-solid fa-file-zipper"></i>
-                        <span>Export Folder</span>
-                    </div>
-                    <div id="expressions_plus_export_all" class="menu_button menu_button_icon flex1" title="Export all sprites (base + subfolders) as a sprite pack ZIP">
-                        <i class="fa-solid fa-file-export"></i>
-                        <span>Export All</span>
-                    </div>
-                    <div id="expressions_plus_import_sprites" class="menu_button menu_button_icon flex1" title="Import a sprite pack ZIP">
-                        <i class="fa-solid fa-file-import"></i>
-                        <span>Import Pack</span>
-                    </div>
-                </div>
-                <div id="expresssions_plus_image_list"></div>
             </div>
         </div>
     </div>

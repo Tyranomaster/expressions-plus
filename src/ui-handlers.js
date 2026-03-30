@@ -17,7 +17,7 @@ const toast = window.toastr;
 import { getRequestHeaders, saveSettingsDebounced } from '../../../../../script.js';
 
 import { OPTION_NO_FALLBACK, OPTION_EMOJI_FALLBACK } from './constants.js';
-import { spriteCache } from './state.js';
+import { spriteCache, setLastMessage } from './state.js';
 import { getSettings } from './settings.js';
 import { getSpriteFolderName, getLastCharacterMessage } from './sprites.js';
 import { sendExpressionCall } from './expression-display.js';
@@ -73,6 +73,7 @@ export function onFallbackChanged() {
     }
 
     saveSettingsDebounced();
+    setLastMessage(null);
 }
 
 /**
@@ -388,6 +389,7 @@ export async function initLowConfidenceSettings() {
         .on('change', function() {
             settings.lowConfidenceEnabled = $(this).prop('checked');
             saveSettingsDebounced();
+            setLastMessage(null);
         });
     
     const thresholdPercent = Math.round((settings.lowConfidenceThreshold ?? 0.10) * 100);
@@ -396,6 +398,7 @@ export async function initLowConfidenceSettings() {
             const value = parseInt(String($(this).val()), 10) || 10;
             settings.lowConfidenceThreshold = value / 100;
             saveSettingsDebounced();
+            setLastMessage(null);
         });
     
     await renderLowConfidenceExpressionPicker();
@@ -403,5 +406,6 @@ export async function initLowConfidenceSettings() {
     $('#expressions_plus_low_confidence_expression').on('change', function() {
         settings.lowConfidenceExpression = String($(this).val());
         saveSettingsDebounced();
+        setLastMessage(null);
     });
 }

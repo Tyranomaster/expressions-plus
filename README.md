@@ -24,7 +24,7 @@ All the functionality of SillyTavern's built-in Expressions extension (local cla
 2. The local classification model downloads automatically on first use (~100MB from Hugging Face) and runs entirely locally — subsequent classifications are nearly instant
 3. Expressions+ will begin detecting emotions from messages and displaying matching sprites
 
-Out of the box, the **Default +** profile is active. It includes rules for 18 combination emotions (like *anxious*, *awe*, *bewildered*, *contempt*, and more) in addition to the base 28 emotions. A matching set of built-in sprites with custom smileys is included in `built-in-sprites/default-plus/`, ready to use as fallback sprites.
+Out of the box, the **Default +** profile is active. It includes rules for 22 combination emotions (like *anxious*, *awe*, *bewildered*, *contempt*, and more) in addition to the base 28 emotions. A matching set of built-in sprites with custom smileys is included in `built-in-sprites/default-plus/`, ready to use as fallback sprites.
 
 ## Features
 
@@ -83,7 +83,7 @@ A notice appears in the settings panel when a folder profile is in use.
 
 ### Expression Analytics
 
-An optional local data collector that helps you discover useful combination rules you haven't created yet.
+An optional local data collector that helps you discover useful combination rules you haven't created yet. (WIP)
 
 - **Off by default** — enable it in the Expression Analytics section of settings
 - Runs entirely locally using IndexedDB (no data is sent anywhere)
@@ -105,7 +105,21 @@ The local classifier recognizes 28 base emotions:
 
 admiration, amusement, anger, annoyance, approval, caring, confusion, curiosity, desire, disappointment, disapproval, disgust, embarrassment, excitement, fear, gratitude, grief, joy, love, nervousness, optimism, pride, realization, relief, remorse, sadness, surprise, neutral
 
-The **Default +** profile extends these with 18 combination rules: anxious, awe, bewildered, contempt, despair, disdain, dread, elated, exasperated, exhilaration, frustrated, fury, horrified, intrigued, lustful, overwhelmed, unsettled, wonder.
+The **Default +** profile extends these with 22 combination rules (like those you can create yourself!): anxious, awe, bewildered, contempt, despair, disdain, dread, elated, exasperated, exhilaration, frustrated, fury, horrified, intrigued, lustful, overwhelmed, panic, reverence, tenderness, trepidation, unsettled, wonder.
+
+## Text Filter and Classifier Controls
+
+Adds control for what gets filtered before being sent to the classifier back end.
+
+Extends the limit from 500 characters to 1600 (The internal limit is 500 tokens, not characters!), with control options for this setting. Enable multi-segment classification to have multiple segments and a carousel control with highlighted text to allow more granular sprites for long messages.
+
+Add custom regex if you want specific filters!
+
+## Scenario Chat Support
+
+Enable Scenario Chat setting to allow smart processing of messages to discover characters in the chat, then classify each's response. (Note, this ONLY works in visual novel mode! Enable it in settings if you haven't)
+
+Also supports custom regex if your scenario doesn't follow any of the built in standards.  Let me know if it's missing too!  I'll gladly add a built in toggle to make it easier!
 
 ## Slash Commands
 

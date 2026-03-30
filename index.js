@@ -1,7 +1,15 @@
 import { eventSource, event_types, saveSettingsDebounced } from '../../../../script.js';
 import { dragElement, isMobile } from '../../../RossAscends-mods.js';
-import { ModuleWorkerWrapper, renderExtensionTemplateAsync } from '../../../extensions.js';
+import { ModuleWorkerWrapper, renderExtensionTemplateAsync, getContext } from '../../../extensions.js';
 import { power_user } from '../../../power-user.js';
+
+import {
+    saveCurrentCharacterLayout,
+    restoreCharacterLayout,
+    clearHolderMovingUIState,
+    onHolderResized,
+    resetAllCharacterLayouts,
+} from './src/sprite-layout.js';
 
 import {
     MODULE_NAME,
@@ -15,8 +23,13 @@ import {
     insightPanelVisible,
     clearSpriteCache,
     setInsightPanelVisible,
+    setLastClassificationScores,
+    setLastMessage,
     clearExpressionSetsCache,
     clearFolderProfileCache,
+    clearSegmentState,
+    currentCharacterAvatar,
+    setCurrentCharacterAvatar,
 } from './src/state.js';
 
 import {
@@ -27,6 +40,7 @@ import {
 import {
     getClassificationScores,
     getExpressionLabel,
+    classifyMessageSegments,
     setUpdateInsightPanelFn,
 } from './src/api.js';
 
@@ -48,6 +62,7 @@ import {
     setUpdateVisualNovelModeFn as setSpritesUpdateVisualNovelModeFn,
     getFolderNameByMessage,
     getLastCharacterMessage,
+    getSpriteFolderName,
 } from './src/sprites.js';
 
 import {
@@ -148,11 +163,22 @@ import {
     setRenderCharacterAssignmentsFn as setSpritePackRenderCharacterAssignmentsFn,
 } from './src/sprite-pack.js';
 
+import { initFilterSettings } from './src/ui-filters.js';
+import { initScenarioSettings } from './src/ui-scenario.js';
+
+import {
+    setSendExpressionCallFn as setCarouselSendExpressionCallFn,
+    setGetSpriteFolderNameFn as setCarouselGetSpriteFolderNameFn,
+    setCarouselUpdateInsightPanelFn,
+    setCarouselSetLastClassificationScoresFn,
+    clearAllCarousels,
+} from './src/segment-carousel.js';
+
 export { MODULE_NAME };
 
 export { lastExpression };
 
-export { getClassificationScores, getExpressionLabel, sendExpressionCall, getExpressionsList, getCachedExpressions };
+export { getClassificationScores, getExpressionLabel, classifyMessageSegments, sendExpressionCall, getExpressionsList, getCachedExpressions };
 
 // ============================================================================
 // Module Wiring - Local wrapper functions
@@ -217,6 +243,12 @@ setSlashRenderCharacterAssignmentsFn(() => renderCharacterAssignments());
 setSpritePackValidateImagesFn(validateImages);
 setSpritePackRenderCharacterAssignmentsFn(() => renderCharacterAssignments());
 
+// Wire up segment-carousel.js dependencies
+setCarouselSendExpressionCallFn(sendExpressionCall);
+setCarouselGetSpriteFolderNameFn(getSpriteFolderName);
+setCarouselUpdateInsightPanelFn((scores) => updateInsightPanel(scores));
+setCarouselSetLastClassificationScoresFn(setLastClassificationScores);
+
 // ============================================================================
 // Fallback Expression Picker
 // ============================================================================
@@ -256,12 +288,35 @@ async function addSettings() {
     $('#expressions_plus_insight_panel').hide();
     initInsightPanel();
 
+    // Add segment carousel panel to page
+    const carouselPanelHtml = await renderExtensionTemplateAsync(MODULE_NAME, 'templates/carousel-panel');
+    $('body').append(carouselPanelHtml);
+    $('#expressions_plus_carousel_panel').hide();
+    dragElement($('#expressions_plus_carousel_panel'));
+
+    // Restore saved panel positions from movingUI state (panels load after ST's loadMovingUIState runs)
+    // Only restore top/left/margin — skip bottom/right/width/height to avoid pinning or collapsing
+    if (!isMobile() && power_user.movingUI && power_user.movingUIState) {
+        for (const panelId of ['expressions_plus_insight_panel', 'expressions_plus_carousel_panel']) {
+            const saved = power_user.movingUIState[panelId];
+            if (saved) {
+                /** @type {Record<string, string>} */
+                const posOnly = {};
+                if (saved.top !== undefined) posOnly.top = saved.top;
+                if (saved.left !== undefined) posOnly.left = saved.left;
+                if (saved.margin !== undefined) posOnly.margin = saved.margin;
+                $(`#${panelId}`).css(posOnly);
+            }
+        }
+    }
+
     // Bind event handlers
     const settings = getSettings();
     
     $('#expressions_plus_translate').prop('checked', settings.translate).on('change', function() {
         settings.translate = $(this).prop('checked');
         saveSettingsDebounced();
+        setLastMessage(null);
     });
     
     $('#expressions_plus_allow_multiple').prop('checked', settings.allowMultiple).on('change', function() {
@@ -307,7 +362,7 @@ async function addSettings() {
     setInsightPanelVisible(insightModeEnabled);
     $('#expressions_plus_insight_panel').toggle(insightPanelVisible);
     
-    $(document).on('click', '.section_toggle', function() {
+    $('.expressions_plus_settings').on('click', '.section_toggle', function() {
         $(this).next('.section_content').slideToggle();
         $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
     });
@@ -329,6 +384,12 @@ async function addSettings() {
     
     initAnalyticsSettings();
     await initAnalyticsDialog();
+
+    // Initialize text preprocessing / filter settings (v0.4.0)
+    initFilterSettings();
+
+    // Initialize scenario (multi-character) chat settings (v0.4.0)
+    initScenarioSettings();
 }
 
 // ============================================================================
@@ -362,12 +423,19 @@ async function addWandButton() {
         const dropdown = $('#expressions_plus_wand_dropdown');
         dropdown.hide();
 
+        // Close dropdown when clicking outside — only bound while dropdown is visible
+        const closeDropdown = (e) => {
+            if (!$(e.target).closest('#expressions_plus_wand, #expressions_plus_wand_dropdown').length) {
+                dropdown.fadeOut(200, () => $(document).off('click.wandClose'));
+            }
+        };
+
         button.on('click', async function(e) {
             e.preventDefault();
             e.stopPropagation();
 
             if (dropdown.is(':visible')) {
-                dropdown.fadeOut(200);
+                dropdown.fadeOut(200, () => $(document).off('click.wandClose'));
                 return;
             }
 
@@ -380,12 +448,7 @@ async function addWandButton() {
 
             loadWandDropdownSets();
             dropdown.fadeIn(200);
-        });
-
-        $(document).on('click', function(e) {
-            if (!$(e.target).closest('#expressions_plus_wand, #expressions_plus_wand_dropdown').length) {
-                dropdown.fadeOut(200);
-            }
+            $(document).on('click.wandClose', closeDropdown);
         });
 
         $(document).on('click', '.expressions_plus_wand_set_item', async function() {
@@ -408,7 +471,7 @@ async function addWandButton() {
                 toast.success(`Expression set changed to: ${setName}`);
             }
             
-            dropdown.fadeOut(200);
+            dropdown.fadeOut(200, () => $(document).off('click.wandClose'));
         });
 
         console.debug('Expressions+: Wand menu button added');
@@ -461,9 +524,7 @@ function addExpressionImage() {
             </div>
         </div>`;
     $('body').append(html);
-    if (!isMobile() && power_user.movingUI && power_user.movingUIState?.['expression-plus-holder']) {
-        $('#expression-plus-holder').css(power_user.movingUIState['expression-plus-holder']);
-    }
+    // Per-character layout is restored in CHAT_CHANGED handler via restoreCharacterLayout()
 }
 
 function addVisualNovelMode() {
@@ -491,12 +552,29 @@ function addVisualNovelMode() {
     moduleWorker();
     
     dragElement($('#expression-plus-holder'));
-    
+
+    // Clear stale bottom/right that dragElement may set during initialization
+    // These cause panels to get pinned with fixed lower bounds on reload
+    for (const selector of ['#expression-plus-holder', '#expressions_plus_insight_panel', '#expressions_plus_carousel_panel']) {
+        $(selector).css({ bottom: '', right: '' });
+    }
+
+    // Save per-character layout after drag ends on the single-sprite holder
+    $(document).on('mouseup', '#expression-plus-holderheader', () => {
+        saveCurrentCharacterLayout();
+    });
+
     eventSource.on(event_types.CHAT_CHANGED, () => {
+        // Save outgoing character's layout before clearing
+        saveCurrentCharacterLayout();
+        clearHolderMovingUIState();
+
         removeExpression();
         clearSpriteCache();
         clearExpressionSetsCache();
         clearFolderProfileCache();
+        clearSegmentState();
+        clearAllCarousels();
         Object.keys(lastExpression).forEach(k => delete lastExpression[k]);
 
         let imgElement = document.getElementById('expression-plus-image');
@@ -507,6 +585,22 @@ function addVisualNovelMode() {
         if (isVisualNovelMode()) {
             $('#visual-novel-plus-wrapper').empty();
         }
+
+        // Determine the new character's avatar key for layout restoration
+        const context = getContext();
+        let newAvatarKey = null;
+        if (!context.groupId && context.characterId !== undefined) {
+            const char = context.characters?.[context.characterId];
+            if (char?.avatar) {
+                newAvatarKey = char.avatar.replace(/\.[^/.]+$/, '');
+            }
+        }
+        setCurrentCharacterAvatar(newAvatarKey);
+        restoreCharacterLayout(newAvatarKey);
+
+        // Re-initialize dragElement to reset its closured height/width variables.
+        // Without this, elementDrag() applies the previous character's dimensions on first drag.
+        dragElement($('#expression-plus-holder'));
 
         renderCharacterAssignments();
 
@@ -521,7 +615,34 @@ function addVisualNovelMode() {
         updateFunction({ newChat: true });
     });
 
-    eventSource.on(event_types.MOVABLE_PANELS_RESET, updateVisualNovelModeDebounced);
+    eventSource.on(event_types.MOVABLE_PANELS_RESET, () => {
+        // Wipe all per-character saved layouts
+        resetAllCharacterLayouts();
+
+        // Clear inline styles on our draggable panels so CSS defaults take over
+        for (const selector of ['#expression-plus-holder', '#expressions_plus_insight_panel', '#expressions_plus_carousel_panel']) {
+            const el = $(selector)[0];
+            if (!el) continue;
+            $(el).css({ top: '', left: '', right: '', bottom: '', height: '', width: '', margin: '', minWidth: '', minHeight: '' });
+            // Reset browser resize tracking
+            el.style.resize = 'none';
+            void el.offsetHeight;
+            el.style.resize = '';
+        }
+
+        // Clear inline styles on any VN/scenario holders currently in the DOM
+        $('#visual-novel-plus-wrapper .expression-plus-holder').each((_, el) => {
+            $(el).css({ top: '', left: '', right: '', bottom: '', height: '', width: '', margin: '', minWidth: '', minHeight: '' });
+            $(el).data('dragged', false);
+            // Reset browser resize tracking
+            el.style.resize = 'none';
+            void el.offsetHeight;
+            el.style.resize = '';
+        });
+
+        // Re-lay out VN group sprites with fresh positions
+        updateVisualNovelModeDebounced();
+    });
     eventSource.on(event_types.GROUP_UPDATED, updateVisualNovelModeDebounced);
 
     window.addEventListener('expressionSetChanged', async (event) => {
@@ -533,6 +654,11 @@ function addVisualNovelMode() {
             ? `${characterId}/${expressionSet}`
             : characterId;
         await sendExpressionCall(spriteFolderName, currentExpression, { force: true });
+    });
+
+    // Listen for resize events from dragElement to save per-character layout
+    eventSource.on('resizeUI', (elementId) => {
+        onHolderResized(elementId);
     });
 
     console.log('Expressions+ extension loaded');

@@ -8,13 +8,15 @@ import { onlyUnique } from '../../../../utils.js';
 import { hideMutedSprites } from '../../../../group-chats.js';
 import { dragElement } from '../../../../RossAscends-mods.js';
 
-import { spriteCache, setSpriteCache } from './state.js';
+import { spriteCache, setSpriteCache, characterSegmentResults, lastExpression } from './state.js';
+import { getSettings } from './settings.js';
 import { 
     getSpritesList, 
     getSpriteFolderName, 
     chooseSpriteForExpression 
 } from './sprites.js';
-import { setImage } from './expression-display.js';
+import { setImage, setDefaultEmojiForImage } from './expression-display.js';
+import { updateCarousel } from './segment-carousel.js';
 
 let validateImages = null;
 let getExpressionLabel = null;
@@ -97,6 +99,7 @@ async function visualNovelSetCharacterSprites(vnContainer, spriteFolderName, exp
     const originalExpression = expression;
     const context = getContext();
     const group = context.groups.find(x => x.id == context.groupId);
+    const settings = getSettings();
     const setSpritePromises = [];
 
     for (const avatar of group.members) {
@@ -106,10 +109,14 @@ async function visualNovelSetCharacterSprites(vnContainer, spriteFolderName, exp
         const character = context.characters.find(x => x.avatar == avatar);
         if (!character) continue;
 
+        // Reset expression to the original for each member
+        expression = originalExpression;
+
         const expressionImage = vnContainer.find(`.expression-plus-holder[data-avatar="${avatar}"]`);
         let img;
 
         const memberSpriteFolderName = getSpriteFolderName({ original_avatar: character.avatar }, character.name);
+        const isSpeaker = !spriteFolderName || spriteFolderName == memberSpriteFolderName;
 
         if (spriteCache[memberSpriteFolderName] === undefined) {
             spriteCache[memberSpriteFolderName] = await getSpritesList(memberSpriteFolderName);
@@ -119,20 +126,28 @@ async function visualNovelSetCharacterSprites(vnContainer, spriteFolderName, exp
 
         if (!originalExpression && Array.isArray(spriteCache[memberSpriteFolderName]) && spriteCache[memberSpriteFolderName].length > 0) {
             expression = await getLastMessageSprite(avatar);
+        } else if (originalExpression && !isSpeaker) {
+            // Non-speaking characters: use their own last known expression
+            // instead of the speaking character's expression
+            const memberName = memberSpriteFolderName.split('/')[0] ?? memberSpriteFolderName;
+            expression = lastExpression[memberName] ?? originalExpression;
         }
 
         const spriteFile = chooseSpriteForExpression(memberSpriteFolderName, expression, { prevExpressionSrc });
         
         if (expressionImage.length) {
-            if (!spriteFolderName || spriteFolderName == memberSpriteFolderName) {
+            if (isSpeaker) {
                 if (validateImages) {
                     await validateImages(memberSpriteFolderName, true);
                 }
                 const path = spriteFile?.imageSrc || '';
                 img = expressionImage.find('img');
                 await setImage(img, path);
+                if (!spriteFile && settings.showDefault && expression) {
+                    setDefaultEmojiForImage(img, expression);
+                }
             }
-            expressionImage.toggleClass('hidden', !spriteFile);
+            expressionImage.toggleClass('hidden', !spriteFile && !settings.showDefault);
         } else {
             const template = $('#expression-plus-holder').clone();
             template.attr('id', `expression-plus-${avatar}`);
@@ -140,9 +155,15 @@ async function visualNovelSetCharacterSprites(vnContainer, spriteFolderName, exp
             template.find('.drag-grabber').attr('id', `expression-plus-${avatar}header`);
             $('#visual-novel-plus-wrapper').append(template);
             dragElement($(template[0]));
-            template.toggleClass('hidden', !spriteFile);
+            template.toggleClass('hidden', !spriteFile && !settings.showDefault);
             img = template.find('img');
-            await setImage(img, spriteFile?.imageSrc || '');
+            if (spriteFile) {
+                await setImage(img, spriteFile.imageSrc);
+            } else if (settings.showDefault && expression) {
+                setDefaultEmojiForImage(img, expression);
+            } else {
+                await setImage(img, '');
+            }
             const fadeInPromise = new Promise(resolve => {
                 template.fadeIn(250, () => resolve());
             });
@@ -155,6 +176,11 @@ async function visualNovelSetCharacterSprites(vnContainer, spriteFolderName, exp
         img.attr('data-expression', expression);
         img.attr('data-sprite-filename', spriteFile?.fileName || null);
         img.attr('title', expression);
+
+        const charSegResults = characterSegmentResults[character.name];
+        if (charSegResults && charSegResults.length > 1) {
+            updateCarousel(character.name, charSegResults, character.name, memberSpriteFolderName);
+        }
     }
 
     return setSpritePromises;
@@ -172,7 +198,7 @@ async function getLastMessageSprite(avatar) {
     );
 
     if (lastMessage && getExpressionLabel) {
-        return await getExpressionLabel(lastMessage.mes || '');
+        return await getExpressionLabel(lastMessage.mes || '', lastMessage.name || '');
     }
 
     return null;
@@ -257,17 +283,19 @@ async function visualNovelUpdateLayers(container) {
     images.forEach((current, index) => {
         const element = $(current);
         const elementID = element.attr('id');
-        if (element.data('dragged') 
-            || (power_user.movingUIState[elementID] 
-                && (typeof power_user.movingUIState[elementID] === 'object') 
-                && Object.keys(power_user.movingUIState[elementID]).length > 0)) {
-            if (power_user.movingUIState[elementID]) {
+        const avatar = element.data('avatar');
+
+        // Check if user has manually positioned this holder via movingUIState
+        if (element.data('dragged') ||
+            (elementID && power_user.movingUIState?.[elementID] &&
+             typeof power_user.movingUIState[elementID] === 'object' &&
+             Object.keys(power_user.movingUIState[elementID]).length > 0)) {
+            if (elementID && power_user.movingUIState?.[elementID]) {
                 element.css(power_user.movingUIState[elementID]);
             }
             return;
         }
 
-        const avatar = element.data('avatar');
         const layerIndex = layerIndices.indexOf(avatar);
         element.css('z-index', layerIndex);
         element.show();

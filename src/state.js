@@ -43,6 +43,30 @@ export let expressionSetsCache = {};
  */
 export let folderProfileCache = {};
 
+/**
+ * Last segment results from multi-segment classification (v0.4.0)
+ * @type {import('./constants.js').SegmentResult[]|null}
+ */
+export let lastSegmentResults = null;
+
+/**
+ * Segment results keyed by character name for VN mode (v0.4.0)
+ * @type {{[characterName: string]: import('./constants.js').SegmentResult[]}}
+ */
+export let characterSegmentResults = {};
+
+/**
+ * Whether the last classified message was detected as a scenario (multi-character) message
+ * @type {boolean}
+ */
+export let lastScenarioDetected = false;
+
+/**
+ * The avatar filename of the currently displayed character (for per-character layout tracking)
+ * @type {string|null}
+ */
+export let currentCharacterAvatar = null;
+
 // ============================================================================
 // State Setters (for controlled mutation from other modules)
 // ============================================================================
@@ -170,4 +194,57 @@ export function setFolderProfileCache(key, value) {
  */
 export function clearFolderProfileCache() {
     folderProfileCache = {};
+}
+
+// ============================================================================
+// Segment Results Setters (v0.4.0)
+// ============================================================================
+
+/**
+ * Sets the last segment results from multi-segment classification
+ * @param {import('./constants.js').SegmentResult[]|null} value
+ */
+export function setLastSegmentResults(value) {
+    lastSegmentResults = value;
+}
+
+/**
+ * Sets segment results for a specific character (VN mode)
+ * @param {string} characterName
+ * @param {import('./constants.js').SegmentResult[]} results
+ */
+export function setCharacterSegmentResults(characterName, results) {
+    characterSegmentResults[characterName] = results;
+}
+
+/**
+ * Clears all character segment results
+ */
+export function clearCharacterSegmentResults() {
+    characterSegmentResults = {};
+}
+
+/**
+ * Clears all segment-related state
+ */
+export function clearSegmentState() {
+    lastSegmentResults = null;
+    characterSegmentResults = {};
+    lastScenarioDetected = false;
+}
+
+/**
+ * Sets whether the last message was detected as a scenario (multi-character) message
+ * @param {boolean} value
+ */
+export function setLastScenarioDetected(value) {
+    lastScenarioDetected = value;
+}
+
+/**
+ * Sets the current character avatar filename
+ * @param {string|null} value
+ */
+export function setCurrentCharacterAvatar(value) {
+    currentCharacterAvatar = value;
 }
