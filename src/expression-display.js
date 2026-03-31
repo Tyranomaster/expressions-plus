@@ -183,9 +183,9 @@ export function setNoneForImage(img, expression) {
  * Resolves the sprite folder for a detected scenario character.
  *
  * Resolution order:
- * 1. Check if the main character folder has sprites; if not → return null (use built-in defaults)
- * 2. Try subfolder: {mainFolder}/{charName}; if it has sprites → use it
- * 3. Fall back to the main character's sprite folder
+ * 1. Try subfolder: {mainFolder}/{charName}; if it has sprites → use it
+ * 2. Fall back to the main character's sprite folder (if it has sprites)
+ * 3. No sprites anywhere → return null (use built-in defaults)
  *
  * @param {string} charName - Detected character name from scenario parsing
  * @param {string} mainSpriteFolderName - The card character's sprite folder
@@ -195,11 +195,6 @@ async function resolveScenarioSpriteFolder(charName, mainSpriteFolderName) {
     // Ensure main folder sprites are cached
     if (spriteCache[mainSpriteFolderName] === undefined) {
         spriteCache[mainSpriteFolderName] = await getSpritesList(mainSpriteFolderName);
-    }
-
-    // If main folder has no sprites, signal to use built-in defaults
-    if (!Array.isArray(spriteCache[mainSpriteFolderName]) || spriteCache[mainSpriteFolderName].length === 0) {
-        return null;
     }
 
     // Try character subfolder: mainFolder/charName
@@ -213,8 +208,13 @@ async function resolveScenarioSpriteFolder(charName, mainSpriteFolderName) {
         return subfolderPath;
     }
 
-    // Fall back to main character's sprites
-    return mainSpriteFolderName;
+    // Fall back to main character's sprites if available
+    if (Array.isArray(spriteCache[mainSpriteFolderName]) && spriteCache[mainSpriteFolderName].length > 0) {
+        return mainSpriteFolderName;
+    }
+
+    // No sprites in subfolder or main folder → use built-in defaults
+    return null;
 }
 
 // ============================================================================

@@ -155,38 +155,8 @@
 
                     <hr>
 
-                    <label class="marginTop5"><strong>Built-in Filters</strong></label>
-                    <small>Toggle built-in regex filters that clean common noise from classifier input.</small>
-
-                    <label class="checkbox_label marginTop5" for="expressions_plus_filter_builtin_ooc" title="Removes ((text)), [OOC: ...], OOC: prefixes, and similar out-of-character markers.">
-                        <input id="expressions_plus_filter_builtin_ooc" type="checkbox">
-                        <span>OOC Markers</span>
-                    </label>
-
-                    <label class="checkbox_label" for="expressions_plus_filter_builtin_extensions" title="Removes {{macros}}, XML-style <tags>, and common extension-injected patterns.">
-                        <input id="expressions_plus_filter_builtin_extensions" type="checkbox">
-                        <span>System/Extension Injections</span>
-                    </label>
-
-                    <label class="checkbox_label" for="expressions_plus_filter_builtin_html" title="Removes HTML entities, residual markdown formatting, and code blocks.">
-                        <input id="expressions_plus_filter_builtin_html" type="checkbox">
-                        <span>HTML/Formatting Artifacts</span>
-                    </label>
-
-                    <label class="checkbox_label" for="expressions_plus_filter_builtin_rp_markup" title="Removes asterisks (*) and double-quotes (&quot;) commonly used for RP action/narration formatting.">
-                        <input id="expressions_plus_filter_builtin_rp_markup" type="checkbox">
-                        <span>RP Markup (Asterisks &amp; Quotes)</span>
-                    </label>
-
-                    <label class="checkbox_label" for="expressions_plus_filter_builtin_emoji" title="Removes emoji and special unicode symbols from classifier input.">
-                        <input id="expressions_plus_filter_builtin_emoji" type="checkbox">
-                        <span>Emoji/Unicode Symbols</span>
-                    </label>
-
-                    <hr>
-
                     <div class="flex-container justifySpaceBetween alignItemsCenter marginTop5">
-                        <label><strong>Custom Filters</strong></label>
+                        <label><strong>Filters</strong></label>
                         <div class="flex-container gap5px">
                             <div id="expressions_plus_add_filter" class="menu_button menu_button_icon" title="Add Custom Filter">
                                 <i class="fa-solid fa-plus"></i>
@@ -200,7 +170,8 @@
                             </div>
                         </div>
                     </div>
-                    <div id="expressions_plus_custom_filters_list" class="marginTop5"></div>
+                    <small>Drag to reorder. Filters apply top-to-bottom. Toggle to enable/disable.</small>
+                    <div id="expressions_plus_all_filters_list" class="marginTop5"></div>
                 </div>
             </div>
 
@@ -236,26 +207,21 @@
                             <input id="expressions_plus_scenario_pattern_italic" type="checkbox">
                             <span>Italic Markdown — <code>*Name*: text</code></span>
                         </label>
-
-                        <label class="checkbox_label marginTop5" for="expressions_plus_scenario_custom_enabled" title="Enable a custom regex pattern in addition to (or instead of) the built-in patterns.">
-                            <input id="expressions_plus_scenario_custom_enabled" type="checkbox">
-                            <span>Custom Regex</span>
-                        </label>
                     </div>
 
-                    <div id="expressions_plus_scenario_custom_fields" style="display: none;">
-                        <div class="flex-container gap10px marginTop5">
-                            <div class="flex-container flexFlowColumn flex1">
-                                <label for="expressions_plus_scenario_custom_regex">Custom Regex Pattern</label>
-                                <input type="text" id="expressions_plus_scenario_custom_regex" class="text_pole" placeholder="e.g., \\*\\*(.+?)\\*\\*:\\s*">
-                                <small>Must contain one capture group <code>(...)</code> for the character name.</small>
-                            </div>
-                            <div class="flex-container flexFlowColumn">
-                                <label for="expressions_plus_scenario_custom_flags">Flags</label>
-                                <input type="text" id="expressions_plus_scenario_custom_flags" class="text_pole" style="width: 60px;" placeholder="gm" value="gm">
+                    <hr>
+
+                    <div class="flex-container justifySpaceBetween alignItemsCenter marginTop5">
+                        <label><strong>Custom Pattern Rules</strong></label>
+                        <div class="flex-container gap5px">
+                            <div id="expressions_plus_scenario_add_pattern" class="menu_button menu_button_icon" title="Add Custom Pattern Rule">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Add</span>
                             </div>
                         </div>
                     </div>
+                    <small>Define multiple custom detection patterns. Each can be toggled independently.</small>
+                    <div id="expressions_plus_scenario_custom_patterns_list" class="marginTop5"></div>
 
                     <div class="flex-container gap5px marginTop10">
                         <div id="expressions_plus_scenario_test" class="menu_button menu_button_icon flex1" title="Test pattern detection on the last character message">

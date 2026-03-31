@@ -87,25 +87,69 @@ export function getBuiltInFilters() {
 }
 
 /**
- * Gets all active filters (built-in + custom) in apply order
- * @returns {import('./constants.js').TextFilter[]}
- */
-export function getActiveFilters() {
-    const settings = getSettings();
-    const builtIn = getBuiltInFilters().filter(f => f.enabled);
-    const custom = (settings.filtersCustom || []).filter(f => f.enabled);
-    return [...builtIn, ...custom];
-}
-
-/**
- * Gets all filters (built-in + custom), including disabled ones
+ * Gets all filters (built-in + custom) sorted by filterOrder, including disabled ones
  * @returns {import('./constants.js').TextFilter[]}
  */
 export function getAllFilters() {
     const settings = getSettings();
     const builtIn = getBuiltInFilters();
     const custom = settings.filtersCustom || [];
-    return [...builtIn, ...custom];
+    const all = [...builtIn, ...custom];
+    return sortByFilterOrder(all, settings.filterOrder);
+}
+
+/**
+ * Gets all active filters (built-in + custom) sorted by filterOrder
+ * @returns {import('./constants.js').TextFilter[]}
+ */
+export function getActiveFilters() {
+    return getAllFilters().filter(f => f.enabled);
+}
+
+/**
+ * Sorts filters according to filterOrder array. Unrecognized IDs are appended at end.
+ * @param {import('./constants.js').TextFilter[]} filters
+ * @param {string[]} order
+ * @returns {import('./constants.js').TextFilter[]}
+ */
+function sortByFilterOrder(filters, order) {
+    if (!Array.isArray(order) || order.length === 0) return filters;
+    const orderMap = new Map(order.map((id, idx) => [id, idx]));
+    const sorted = [...filters];
+    sorted.sort((a, b) => {
+        const ai = orderMap.has(a.id) ? orderMap.get(a.id) : order.length + filters.indexOf(a);
+        const bi = orderMap.has(b.id) ? orderMap.get(b.id) : order.length + filters.indexOf(b);
+        return ai - bi;
+    });
+    return sorted;
+}
+
+/**
+ * Ensures filterOrder is populated with all known filter IDs.
+ * Called internally when adding/removing filters.
+ * @param {Object} settings
+ */
+function ensureFilterOrder(settings) {
+    if (!Array.isArray(settings.filterOrder)) {
+        settings.filterOrder = [];
+    }
+}
+
+/**
+ * Moves a filter to a new position in filterOrder
+ * @param {string} filterId - ID of the filter to move
+ * @param {number} newIndex - Target index in filterOrder
+ * @returns {boolean} Whether the move was successful
+ */
+export function moveFilter(filterId, newIndex) {
+    const settings = getSettings();
+    ensureFilterOrder(settings);
+    const order = settings.filterOrder;
+    const oldIndex = order.indexOf(filterId);
+    if (oldIndex < 0) return false;
+    order.splice(oldIndex, 1);
+    order.splice(Math.max(0, Math.min(newIndex, order.length)), 0, filterId);
+    return true;
 }
 
 /**
@@ -368,6 +412,10 @@ export function addCustomFilter(filter) {
         settings.filtersCustom = [];
     }
     settings.filtersCustom.push(filter);
+    ensureFilterOrder(settings);
+    if (!settings.filterOrder.includes(filter.id)) {
+        settings.filterOrder.push(filter.id);
+    }
 }
 
 /**
@@ -395,6 +443,9 @@ export function removeCustomFilter(filterId) {
     const index = settings.filtersCustom.findIndex(f => f.id === filterId);
     if (index < 0) return false;
     settings.filtersCustom.splice(index, 1);
+    ensureFilterOrder(settings);
+    const orderIndex = settings.filterOrder.indexOf(filterId);
+    if (orderIndex >= 0) settings.filterOrder.splice(orderIndex, 1);
     return true;
 }
 
@@ -413,6 +464,7 @@ export function exportFilterPreset() {
         version: 1,
         builtInStates: { ...(settings.filtersBuiltIn || {}) },
         customFilters: structuredClone(settings.filtersCustom || []),
+        filterOrder: [...(settings.filterOrder || [])],
     };
 }
 
@@ -439,6 +491,12 @@ export function importFilterPreset(data) {
             isBuiltIn: false,
         }));
     }
+
+    // Rebuild filterOrder: keep built-in order, append new custom IDs
+    ensureFilterOrder(settings);
+    const builtInIds = settings.filterOrder.filter(id => id.startsWith('builtin_'));
+    const customIds = (settings.filtersCustom || []).map(f => f.id);
+    settings.filterOrder = [...builtInIds, ...customIds];
 
     return true;
 }

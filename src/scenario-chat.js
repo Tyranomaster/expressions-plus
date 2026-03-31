@@ -74,20 +74,20 @@ export function getActiveScenarioPatterns(settings) {
         }
     }
 
-    if (settings.scenarioCustomEnabled) {
-        const customRegex = settings.scenarioCustomRegex;
-        const customFlags = settings.scenarioCustomFlags || 'gm';
-        if (customRegex) {
+    // Custom pattern rules
+    if (Array.isArray(settings.scenarioCustomPatterns)) {
+        for (const cp of settings.scenarioCustomPatterns) {
+            if (!cp.enabled || !cp.pattern) continue;
             try {
-                const re = new RegExp(customRegex, customFlags);
-                // Verify at least one capture group exists
-                if (new RegExp('|' + customRegex).exec('').length >= 2) {
-                    compiled.push(re);
-                } else {
-                    console.warn('Expressions+ Scenario: Custom regex must have at least one capture group for the character name.');
+                const hasCaptureGroup = new RegExp('|' + cp.pattern).exec('').length >= 2;
+                let finalPattern = cp.pattern;
+                if (!hasCaptureGroup) {
+                    finalPattern = '(' + cp.pattern + ')';
                 }
+                const re = new RegExp(finalPattern, cp.flags || 'gm');
+                compiled.push(re);
             } catch (err) {
-                console.warn('Expressions+ Scenario: Invalid custom regex:', err.message);
+                console.warn(`Expressions+ Scenario: Invalid custom pattern "${cp.name}":`, err.message);
             }
         }
     }
@@ -117,7 +117,7 @@ function collectAllMarkers(text, patterns) {
         let match;
         while ((match = pattern.exec(text)) !== null) {
             allMarkers.push({
-                characterName: match[1].trim(),
+                characterName: (match[1] ?? match[0]).trim(),
                 markerStart: match.index,
                 markerEnd: match.index + match[0].length,
             });

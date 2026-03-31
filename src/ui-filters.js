@@ -6,7 +6,7 @@
  */
 
 import { saveSettingsDebounced } from '../../../../../script.js';
-import { callGenericPopup, POPUP_TYPE } from '../../../../popup.js';
+import { callGenericPopup, POPUP_TYPE, POPUP_RESULT } from '../../../../popup.js';
 import { getContext } from '../../../../extensions.js';
 
 import { BUILTIN_FILTER, SPLIT_STRATEGY, DEFAULT_SAMPLE_SIZE } from './constants.js';
@@ -19,6 +19,7 @@ import {
     addCustomFilter,
     updateCustomFilter,
     removeCustomFilter,
+    moveFilter,
     exportFilterPreset,
     importFilterPreset,
     testFilter,
@@ -145,18 +146,7 @@ export function initFilterSettings() {
         refreshHighlights();
     });
 
-    for (const filter of getBuiltInFilters()) {
-        $(`#expressions_plus_filter_${filter.id}`)
-            .prop('checked', filter.enabled)
-            .on('change', function () {
-                if (!settings.filtersBuiltIn) settings.filtersBuiltIn = {};
-                settings.filtersBuiltIn[filter.id] = $(this).prop('checked');
-                saveSettingsDebounced();
-                setLastMessage(null);
-            });
-    }
-
-    renderCustomFilterList();
+    renderFilterList();
 
     $('#expressions_plus_add_filter').on('click', onClickAddFilter);
     $('#expressions_plus_export_filters').on('click', onClickExportFilters);
@@ -169,20 +159,21 @@ export function initFilterSettings() {
 // ============================================================================
 
 /**
- * Renders the custom filter list in the settings panel
+ * Renders the unified filter list (built-in + custom) in filterOrder
  */
-export function renderCustomFilterList() {
-    const settings = getSettings();
-    const container = $('#expressions_plus_custom_filters_list');
+export function renderFilterList() {
+    const container = $('#expressions_plus_all_filters_list');
     container.empty();
 
-    const filters = settings.filtersCustom || [];
+    const filters = getAllFilters();
     if (filters.length === 0) {
-        container.append('<div class="filter_empty_notice"><small>No custom filters defined.</small></div>');
+        container.append('<div class="filter_empty_notice"><small>No filters defined.</small></div>');
         return;
     }
 
     for (const filter of filters) {
+        const isBuiltIn = !!filter.isBuiltIn;
+
         const tooltipLines = [
             filter.name,
             filter.description ? `\n${filter.description}` : '',
@@ -191,13 +182,7 @@ export function renderCustomFilterList() {
             `Replacement: ${filter.replacement ? '"' + filter.replacement + '"' : '(remove)'}`,
         ].filter(Boolean).join('\n');
 
-        const item = $(`
-            <div class="filter_item" data-filter-id="${filter.id}" title="${escapeHtml(tooltipLines)}">
-                <label class="checkbox_label filter_toggle">
-                    <input type="checkbox" class="filter_enabled_toggle" ${filter.enabled ? 'checked' : ''}>
-                </label>
-                <span class="filter_name">${escapeHtml(filter.name)}</span>
-                <span class="filter_pattern_preview">${escapeHtml(truncate(filter.pattern, 30))}</span>
+        const actionsHtml = isBuiltIn ? '' : `
                 <div class="filter_actions">
                     <div class="menu_button menu_button_icon filter_edit_btn" title="Edit Filter">
                         <i class="fa-solid fa-pencil"></i>
@@ -205,20 +190,135 @@ export function renderCustomFilterList() {
                     <div class="menu_button menu_button_icon filter_delete_btn" title="Delete Filter">
                         <i class="fa-solid fa-trash"></i>
                     </div>
-                </div>
+                </div>`;
+
+        const badgeHtml = isBuiltIn
+            ? '<span class="filter_builtin_badge">built-in</span>'
+            : '';
+
+        const item = $(`
+            <div class="filter_item" data-filter-id="${filter.id}" draggable="true" title="${escapeHtml(tooltipLines)}">
+                <span class="filter_drag_handle" title="Drag to reorder">
+                    <i class="fa-solid fa-grip-vertical"></i>
+                </span>
+                <label class="checkbox_label filter_toggle">
+                    <input type="checkbox" class="filter_enabled_toggle" ${filter.enabled ? 'checked' : ''}>
+                </label>
+                <span class="filter_name">${escapeHtml(filter.name)}</span>
+                ${badgeHtml}
+                <span class="filter_pattern_preview">${escapeHtml(truncate(filter.pattern, 30))}</span>
+                ${actionsHtml}
             </div>
         `);
 
         item.find('.filter_enabled_toggle').on('change', function () {
-            updateCustomFilter(filter.id, { enabled: $(this).prop('checked') });
+            const settings = getSettings();
+            const checked = $(this).prop('checked');
+            if (isBuiltIn) {
+                if (!settings.filtersBuiltIn) settings.filtersBuiltIn = {};
+                settings.filtersBuiltIn[filter.id] = checked;
+            } else {
+                updateCustomFilter(filter.id, { enabled: checked });
+            }
             saveSettingsDebounced();
             setLastMessage(null);
         });
 
-        item.find('.filter_edit_btn').on('click', () => onClickEditFilter(filter.id));
-        item.find('.filter_delete_btn').on('click', () => onClickDeleteFilter(filter.id));
+        if (!isBuiltIn) {
+            item.find('.filter_edit_btn').on('click', () => onClickEditFilter(filter.id));
+            item.find('.filter_delete_btn').on('click', () => onClickDeleteFilter(filter.id));
+        }
 
         container.append(item);
+    }
+
+    initFilterDragAndDrop();
+}
+
+// ============================================================================
+// Filter Drag & Drop Reordering
+// ============================================================================
+
+/** @type {HTMLElement|null} */
+let draggedFilterEl = null;
+
+/**
+ * Initializes drag-and-drop on the filter items in the list
+ */
+function initFilterDragAndDrop() {
+    const container = document.getElementById('expressions_plus_all_filters_list');
+    if (!container) return;
+
+    container.querySelectorAll('.filter_item[draggable]').forEach(item => {
+        item.addEventListener('dragstart', onFilterDragStart);
+        item.addEventListener('dragend', onFilterDragEnd);
+        item.addEventListener('dragover', onFilterDragOver);
+        item.addEventListener('dragenter', onFilterDragEnter);
+        item.addEventListener('dragleave', onFilterDragLeave);
+        item.addEventListener('drop', onFilterDrop);
+    });
+}
+
+/** @param {DragEvent} e */
+function onFilterDragStart(e) {
+    draggedFilterEl = /** @type {HTMLElement} */ (e.currentTarget);
+    draggedFilterEl.classList.add('filter_dragging');
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', draggedFilterEl.dataset.filterId || '');
+    }
+}
+
+/** @param {DragEvent} e */
+function onFilterDragEnd(e) {
+    const el = /** @type {HTMLElement} */ (e.currentTarget);
+    el.classList.remove('filter_dragging');
+    document.querySelectorAll('.filter_drag_over').forEach(el => el.classList.remove('filter_drag_over'));
+    draggedFilterEl = null;
+}
+
+/** @param {DragEvent} e */
+function onFilterDragOver(e) {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+}
+
+/** @param {DragEvent} e */
+function onFilterDragEnter(e) {
+    e.preventDefault();
+    const target = /** @type {HTMLElement} */ (e.currentTarget);
+    if (target !== draggedFilterEl) {
+        target.classList.add('filter_drag_over');
+    }
+}
+
+/** @param {DragEvent} e */
+function onFilterDragLeave(e) {
+    const target = /** @type {HTMLElement} */ (e.currentTarget);
+    target.classList.remove('filter_drag_over');
+}
+
+/** @param {DragEvent} e */
+function onFilterDrop(e) {
+    e.preventDefault();
+    const target = /** @type {HTMLElement} */ (e.currentTarget);
+    target.classList.remove('filter_drag_over');
+
+    if (!draggedFilterEl || target === draggedFilterEl) return;
+
+    const draggedId = draggedFilterEl.dataset.filterId;
+    const targetId = target.dataset.filterId;
+    if (!draggedId || !targetId) return;
+
+    // Find target index in filterOrder
+    const settings = getSettings();
+    const targetIndex = (settings.filterOrder || []).indexOf(targetId);
+    if (targetIndex === -1) return;
+
+    if (moveFilter(draggedId, targetIndex)) {
+        saveSettingsDebounced();
+        setLastMessage(null);
+        renderFilterList();
     }
 }
 
@@ -291,12 +391,7 @@ async function openFilterEditorModal(existingFilter) {
         </div>
     `;
 
-    const result = await callGenericPopup(html, POPUP_TYPE.CONFIRM, '', {
-        okButton: isEdit ? 'Save' : 'Create',
-        cancelButton: 'Cancel',
-        wide: true,
-    });
-
+    // Register test button handler BEFORE showing popup so it's active while open
     $(document).off('click', '#filter_editor_test_btn').on('click', '#filter_editor_test_btn', function () {
         const pattern = String($('#filter_editor_pattern').val() || '');
         const flags = String($('#filter_editor_flags').val() || '');
@@ -321,13 +416,34 @@ async function openFilterEditorModal(existingFilter) {
         }
     });
 
-    if (result !== POPUP_TYPE.CONFIRM) return null;
+    // Capture form values in onClosing while popup DOM is still alive,
+    // because the DOM is removed before the callGenericPopup promise resolves.
+    let capturedValues = null;
 
-    const name = String($('#filter_editor_name').val() || '').trim();
-    const description = String($('#filter_editor_description').val() || '').trim();
-    const pattern = String($('#filter_editor_pattern').val() || '').trim();
-    const flags = String($('#filter_editor_flags').val() || '').trim() || 'gi';
-    const replacement = String($('#filter_editor_replacement').val() || '');
+    const result = await callGenericPopup(html, POPUP_TYPE.CONFIRM, '', {
+        okButton: isEdit ? 'Save' : 'Create',
+        cancelButton: 'Cancel',
+        wide: true,
+        onClosing: (popup) => {
+            if (popup.result === POPUP_RESULT.AFFIRMATIVE) {
+                capturedValues = {
+                    name: String($('#filter_editor_name').val() || '').trim(),
+                    description: String($('#filter_editor_description').val() || '').trim(),
+                    pattern: String($('#filter_editor_pattern').val() || '').trim(),
+                    flags: String($('#filter_editor_flags').val() || '').trim() || 'gi',
+                    replacement: String($('#filter_editor_replacement').val() || ''),
+                };
+            }
+            return true;
+        },
+    });
+
+    // Clean up delegated handler after popup closes
+    $(document).off('click', '#filter_editor_test_btn');
+
+    if (result !== POPUP_RESULT.AFFIRMATIVE || !capturedValues) return null;
+
+    const { name, description, pattern, flags, replacement } = capturedValues;
 
     if (!name || !pattern) {
         /** @type {any} */
@@ -360,7 +476,7 @@ async function onClickAddFilter() {
     addCustomFilter(filter);
     saveSettingsDebounced();
     setLastMessage(null);
-    renderCustomFilterList();
+    renderFilterList();
 }
 
 async function onClickEditFilter(filterId) {
@@ -374,14 +490,14 @@ async function onClickEditFilter(filterId) {
     updateCustomFilter(filterId, result);
     saveSettingsDebounced();
     setLastMessage(null);
-    renderCustomFilterList();
+    renderFilterList();
 }
 
 function onClickDeleteFilter(filterId) {
     removeCustomFilter(filterId);
     saveSettingsDebounced();
     setLastMessage(null);
-    renderCustomFilterList();
+    renderFilterList();
 }
 
 async function onClickExportFilters() {
@@ -418,7 +534,7 @@ async function onClickImportFilters() {
             if (success) {
                 saveSettingsDebounced();
                 setLastMessage(null);
-                renderCustomFilterList();
+                renderFilterList();
                 initFilterSettingsState();
 
                 /** @type {any} */
@@ -441,12 +557,10 @@ async function onClickImportFilters() {
 }
 
 /**
- * Re-syncs the built-in filter checkbox states after import
+ * Re-syncs the filter list and control states after import
  */
 function initFilterSettingsState() {
-    for (const filter of getBuiltInFilters()) {
-        $(`#expressions_plus_filter_${filter.id}`).prop('checked', filter.enabled);
-    }
+    renderFilterList();
 
     const settings = getSettings();
     $('#expressions_plus_sample_size').val(settings.sampleSize ?? DEFAULT_SAMPLE_SIZE);

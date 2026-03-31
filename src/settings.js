@@ -144,6 +144,7 @@ export function getDefaultSettings() {
             [BUILTIN_FILTER.RP_MARKUP]: false,
         },
         filtersCustom: [],
+        filterOrder: [],
 
         multiSegmentEnabled: true,
 
@@ -157,9 +158,7 @@ export function getDefaultSettings() {
             plain_colon: false,
             italic_markdown: false,
         },
-        scenarioCustomEnabled: false,
-        scenarioCustomRegex: '',
-        scenarioCustomFlags: 'gm',
+        scenarioCustomPatterns: [],
 
         characterLayouts: {},
     };
@@ -426,10 +425,10 @@ export async function migrateSettings() {
             settings.scenarioEnabled = defaults.scenarioEnabled;
         }
         if (settings.scenarioCustomRegex === undefined) {
-            settings.scenarioCustomRegex = defaults.scenarioCustomRegex;
+            settings.scenarioCustomRegex = '';
         }
         if (settings.scenarioCustomFlags === undefined) {
-            settings.scenarioCustomFlags = defaults.scenarioCustomFlags;
+            settings.scenarioCustomFlags = 'gm';
         }
 
         // Migrate from old single-select scenarioPatternId to multi-toggle scenarioPatterns
@@ -451,10 +450,44 @@ export async function migrateSettings() {
             settings.scenarioPatterns = defaults.scenarioPatterns;
         }
         if (settings.scenarioCustomEnabled === undefined) {
-            settings.scenarioCustomEnabled = defaults.scenarioCustomEnabled;
+            settings.scenarioCustomEnabled = false;
         }
 
         settings._v040ScenarioMigrationApplied = true;
+        saveSettingsDebounced();
+    }
+
+    // v0.4.1 — filterOrder: unified ordering for built-in + custom filters
+    if (!settings._v041FilterOrderMigrationApplied) {
+        if (!Array.isArray(settings.filterOrder) || settings.filterOrder.length === 0) {
+            const builtInIds = Object.values(BUILTIN_FILTER);
+            const customIds = (settings.filtersCustom || []).map(f => f.id);
+            settings.filterOrder = [...builtInIds, ...customIds];
+        }
+        settings._v041FilterOrderMigrationApplied = true;
+        saveSettingsDebounced();
+    }
+
+    // v0.4.1 — scenarioCustomPatterns: migrate single custom regex to array & remove legacy fields
+    if (!settings._v041ScenarioPatternsMigrationApplied) {
+        if (!Array.isArray(settings.scenarioCustomPatterns)) {
+            settings.scenarioCustomPatterns = [];
+        }
+        if (settings.scenarioCustomRegex && settings.scenarioCustomPatterns.length === 0) {
+            settings.scenarioCustomPatterns.push({
+                id: `scenario_custom_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                name: 'Legacy Custom Regex (rename/modify)',
+                pattern: settings.scenarioCustomRegex,
+                flags: settings.scenarioCustomFlags || 'gm',
+                description: 'Migrated from legacy single custom regex field.',
+                enabled: !!settings.scenarioCustomEnabled,
+            });
+        }
+        // Clean up legacy fields
+        delete settings.scenarioCustomEnabled;
+        delete settings.scenarioCustomRegex;
+        delete settings.scenarioCustomFlags;
+        settings._v041ScenarioPatternsMigrationApplied = true;
         saveSettingsDebounced();
     }
 }

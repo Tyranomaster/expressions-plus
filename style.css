@@ -1397,11 +1397,12 @@ img.expression-plus.default {
    Text Filter Settings (v0.4.0)
    ============================================================================ */
 
-#expressions_plus_custom_filters_list {
+#expressions_plus_custom_filters_list,
+#expressions_plus_all_filters_list {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    max-height: 180px;
+    max-height: 280px;
     overflow-y: auto;
 }
 
@@ -1413,6 +1414,49 @@ img.expression-plus.default {
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 4px;
     padding: 5px 8px;
+    transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.filter_item[draggable] {
+    cursor: default;
+}
+
+.filter_drag_handle {
+    cursor: grab;
+    color: var(--SmartThemeQuoteColor);
+    padding: 2px 4px;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+    flex-shrink: 0;
+}
+
+.filter_drag_handle:hover {
+    opacity: 1;
+}
+
+.filter_drag_handle:active {
+    cursor: grabbing;
+}
+
+.filter_item.filter_dragging {
+    opacity: 0.4;
+}
+
+.filter_item.filter_drag_over {
+    border-color: var(--active);
+    box-shadow: 0 0 0 1px var(--active);
+}
+
+.filter_builtin_badge {
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    white-space: nowrap;
+    font-weight: 600;
+    background: var(--SmartThemeQuoteColor);
+    color: var(--SmartThemeBlurTintColor);
+    opacity: 0.7;
+    flex-shrink: 0;
 }
 
 .filter_toggle {
@@ -1452,6 +1496,83 @@ img.expression-plus.default {
     text-align: center;
     padding: 8px;
     color: var(--SmartThemeQuoteColor);
+}
+
+/* Scenario custom pattern rules */
+#expressions_plus_scenario_custom_patterns_list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.scenario_pattern_item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 4px;
+    padding: 5px 8px;
+}
+
+.scenario_pattern_toggle {
+    flex-shrink: 0;
+}
+
+.scenario_pattern_name {
+    font-weight: 600;
+    min-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.scenario_pattern_preview {
+    flex: 1;
+    color: var(--SmartThemeQuoteColor);
+    font-size: 0.8rem;
+    font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scenario_pattern_actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.scenario_pattern_actions .menu_button {
+    padding: 4px 8px;
+    margin: 0;
+}
+
+.scenario_pattern_empty_notice {
+    text-align: center;
+    padding: 8px;
+    color: var(--SmartThemeQuoteColor);
+}
+
+.scenario_test_char_badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: var(--SmartThemeQuoteColor);
+    color: var(--SmartThemeBlurTintColor);
+    margin: 0 2px;
+}
+
+.scenario_pattern_editor {
+    min-width: 400px;
+}
+
+.scenario_pattern_editor h3 {
+    margin: 0 0 10px 0;
 }
 
 /* Filter editor modal */
