@@ -153,7 +153,7 @@ export async function moduleWorker({ newChat = false } = {}) {
         await forceUpdateVisualNovelMode();
     }
 
-    if ((!Array.isArray(spriteCache[spriteFolderName]) || spriteCache[spriteFolderName].length === 0) && !settings.showDefault) {
+    if ((!Array.isArray(spriteCache[spriteFolderName]) || spriteCache[spriteFolderName].length === 0) && !settings.showDefault && !settings.scenarioEnabled) {
         return;
     }
 
