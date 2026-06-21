@@ -157,6 +157,16 @@ export async function moduleWorker({ newChat = false } = {}) {
         return;
     }
 
+    // Skip classification while a message is being edited. With SillyTavern's
+    // "auto-save message edits" option enabled, every keystroke in the edit
+    // textarea rewrites chat[mesId].mes live, so each polling tick would re-run
+    // the (local, in-browser) classifier on half-typed text and cause heavy lag.
+    // Don't update lastMessage here: once the edit is committed/cancelled the
+    // message settles to its final value and the next tick classifies it once.
+    if (document.getElementById('curEditTextarea')) {
+        return;
+    }
+
     const lastMessageChanged = !((lastCharacter === context.characterId || lastCharacter === context.groupId) && lastMessage === currentLastMessage.mes);
 
     if (!lastMessageChanged) return;
