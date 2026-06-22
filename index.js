@@ -16,6 +16,7 @@ import {
     UPDATE_INTERVAL,
     OPTION_NO_FALLBACK,
     OPTION_EMOJI_FALLBACK,
+    OPTION_AVATAR_FALLBACK,
 } from './src/constants.js';
 
 import {
@@ -252,7 +253,6 @@ setCarouselSetLastClassificationScoresFn(setLastClassificationScores);
 // ============================================================================
 // Fallback Expression Picker
 // ============================================================================
-
 async function renderFallbackExpressionPicker() {
     const settings = getSettings();
     const expressions = await getExpressionsList();
@@ -261,13 +261,16 @@ async function renderFallbackExpressionPicker() {
     picker.empty();
     picker.append(`<option value="${OPTION_NO_FALLBACK}">[ No fallback ]</option>`);
     picker.append(`<option value="${OPTION_EMOJI_FALLBACK}">[ Default+ smileys ]</option>`);
+    picker.append(`<option value="${OPTION_AVATAR_FALLBACK}">[ Character avatar ]</option>`);
     
     expressions.forEach(expression => {
         const selected = expression === settings.fallback_expression ? 'selected' : '';
         picker.append(`<option value="${expression}" ${selected}>${expression}</option>`);
     });
 
-    if (settings.showDefault) {
+    if (settings.useAvatarFallback) {
+        picker.val(OPTION_AVATAR_FALLBACK);
+    } else if (settings.showDefault) {
         picker.val(OPTION_EMOJI_FALLBACK);
     } else if (!settings.fallback_expression) {
         picker.val(OPTION_NO_FALLBACK);

@@ -118,6 +118,7 @@ export function getDefaultSettings() {
         filterAvailable: false,
         fallback_expression: DEFAULT_FALLBACK_EXPRESSION,
         showDefault: true,
+        useAvatarFallback: false,
         custom: [],
         
         profiles: getFallbackBuiltInProfiles(),
@@ -357,6 +358,11 @@ export async function migrateSettings() {
     if (!settings._showDefaultMigrationApplied) {
         settings.showDefault = true;
         settings._showDefaultMigrationApplied = true;
+        saveSettingsDebounced();
+    }
+
+    if (settings.useAvatarFallback === undefined) {
+        settings.useAvatarFallback = false;
         saveSettingsDebounced();
     }
 

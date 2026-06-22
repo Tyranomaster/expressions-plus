@@ -23,6 +23,7 @@ export const DEFAULT_EXPRESSIONS = [
 
 export const OPTION_NO_FALLBACK = '#none';
 export const OPTION_EMOJI_FALLBACK = '#emoji';
+export const OPTION_AVATAR_FALLBACK = '#avatar';
 export const RESET_SPRITE_LABEL = '#reset';
 export const DEFAULT_PROFILE_NAME = 'Default (Legacy)';
 export const DEFAULT_PROFILE_ID = 'default';

@@ -153,11 +153,12 @@ export async function moduleWorker({ newChat = false } = {}) {
         await forceUpdateVisualNovelMode();
     }
 
-    if ((!Array.isArray(spriteCache[spriteFolderName]) || spriteCache[spriteFolderName].length === 0) && !settings.showDefault && !settings.scenarioEnabled) {
+    if ((!Array.isArray(spriteCache[spriteFolderName]) || spriteCache[spriteFolderName].length === 0) && !settings.showDefault && !settings.useAvatarFallback && !settings.scenarioEnabled) {
         return;
     }
 
     const lastMessageChanged = !((lastCharacter === context.characterId || lastCharacter === context.groupId) && lastMessage === currentLastMessage.mes);
+    console.debug('[Expressions+] moduleWorker lastMessageChanged', { lastMessageChanged, lastCharacter, characterId: context.characterId, groupId: context.groupId, lastMsg: lastMessage, currentMsg: currentLastMessage.mes?.slice(0, 50) });
 
     if (!lastMessageChanged) return;
 
@@ -185,6 +186,7 @@ export async function moduleWorker({ newChat = false } = {}) {
         if (currentLastMessage.mes == '...' && expressionsList.includes(settings.fallback_expression)) {
             expression = settings.fallback_expression;
         }
+        console.debug('[Expressions+] moduleWorker calling sendExpressionCall', { spriteFolderName, expression, vnMode });
         await sendExpressionCall(spriteFolderName, expression, { force, vnMode });
     } catch (error) {
         console.error(error);

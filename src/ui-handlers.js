@@ -16,7 +16,7 @@ const toast = window.toastr;
 
 import { getRequestHeaders, saveSettingsDebounced } from '../../../../../script.js';
 
-import { OPTION_NO_FALLBACK, OPTION_EMOJI_FALLBACK } from './constants.js';
+import { OPTION_NO_FALLBACK, OPTION_EMOJI_FALLBACK, OPTION_AVATAR_FALLBACK } from './constants.js';
 import { spriteCache, setLastMessage } from './state.js';
 import { getSettings } from './settings.js';
 import { getSpriteFolderName, getLastCharacterMessage } from './sprites.js';
@@ -64,12 +64,19 @@ export function onFallbackChanged() {
     if (value === OPTION_NO_FALLBACK) {
         settings.fallback_expression = '';
         settings.showDefault = false;
+        settings.useAvatarFallback = false;
     } else if (value === OPTION_EMOJI_FALLBACK) {
         settings.fallback_expression = '';
         settings.showDefault = true;
+        settings.useAvatarFallback = false;
+    } else if (value === OPTION_AVATAR_FALLBACK) {
+        settings.fallback_expression = '';
+        settings.showDefault = false;
+        settings.useAvatarFallback = true;
     } else {
         settings.fallback_expression = value;
         settings.showDefault = false;
+        settings.useAvatarFallback = false;
     }
 
     saveSettingsDebounced();
