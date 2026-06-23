@@ -23,7 +23,7 @@ let _prevScenarioState = false;
 
 /**
  * Sets the validateImages function reference
- * @param {Function} fn 
+ * @param {Function} fn
  */
 export function setValidateImagesFn(fn) {
     validateImages = fn;
@@ -31,7 +31,7 @@ export function setValidateImagesFn(fn) {
 
 /**
  * Sets the updateVisualNovelMode function reference
- * @param {Function} fn 
+ * @param {Function} fn
  */
 export function setUpdateVisualNovelModeFn(fn) {
     updateVisualNovelMode = fn;
@@ -39,7 +39,7 @@ export function setUpdateVisualNovelModeFn(fn) {
 
 /**
  * Sets the isVisualNovelMode function reference
- * @param {Function} fn 
+ * @param {Function} fn
  */
 export function setIsVisualNovelModeFn(fn) {
     isVisualNovelMode = fn;
@@ -47,7 +47,7 @@ export function setIsVisualNovelModeFn(fn) {
 
 /**
  * Sets the chooseSpriteForExpression function reference
- * @param {Function} fn 
+ * @param {Function} fn
  */
 export function setChooseSpriteForExpressionFn(fn) {
     chooseSpriteForExpression = fn;
@@ -73,8 +73,8 @@ export function removeExpression() {
 
 /**
  * Sets the image with animation
- * @param {JQuery} img 
- * @param {string} path 
+ * @param {JQuery} img
+ * @param {string} path
  */
 export async function setImage(img, path) {
     return new Promise(resolve => {
@@ -99,7 +99,7 @@ export async function setImage(img, path) {
 
             img.css('position', 'absolute').width(imgWidth).height(imgHeight);
             expressionClone.addClass('expression-plus-animating');
-            
+
             expressionClone.css({ opacity: 0 }).animate({ opacity: 1 }, duration)
                 .promise().done(function () {
                     img.animate({ opacity: 0 }, duration);
@@ -148,7 +148,7 @@ export async function setImage(img, path) {
  */
 export function setDefaultEmojiForImage(img, expression) {
     const settings = getSettings();
-    
+
     if (settings.custom?.includes(expression)) {
         console.debug(`Can't set default emoji for custom expression (${expression}), setting to neutral instead.`);
         expression = 'neutral';
@@ -160,6 +160,49 @@ export function setDefaultEmojiForImage(img, expression) {
     img.attr('data-sprite-filename', null);
     img.attr('title', expression);
     img.addClass('default');
+}
+
+/**
+ * Sets the character's avatar as the fallback expression image
+ * @param {JQuery<HTMLElement>} img - The image element to set the avatar on
+ * @param {string} expression - The expression label
+ * @param {string} [spriteFolderName] - The character's sprite folder name (used to resolve avatar in group mode)
+ */
+export function setAvatarFallbackForImage(img, expression, spriteFolderName) {
+    const context = getContext();
+    let avatar = null;
+
+    // Resolve the character name: strip expression set subfolder if present
+    const characterName = spriteFolderName?.split('/')[0] ?? '';
+
+    if (characterName) {
+        const character = context.characters.find(c => c.name === characterName);
+        avatar = character?.avatar;
+    }
+
+    if (!avatar && context.characterId !== undefined) {
+        const character = context.characters.find(c => c.name === context.name2);
+        avatar = character?.avatar;
+    }
+
+    console.debug('[Expressions+] setAvatarFallbackForImage', {
+        spriteFolderName,
+        characterName,
+        name2: context.name2,
+        resolvedAvatar: avatar,
+    });
+
+    if (!avatar) {
+        setNoneForImage(img, expression);
+        return;
+    }
+
+    const avatarUrl = `/thumbnail?type=avatar&file=${encodeURIComponent(avatar)}`;
+    img.attr('src', avatarUrl);
+    img.attr('data-expression', expression);
+    img.attr('data-sprite-filename', null);
+    img.attr('title', expression);
+    img.addClass('avatar-default');
 }
 
 /**
@@ -269,8 +312,8 @@ async function updateScenarioDisplay(mainSpriteFolderName) {
             })
             : null;
 
-        // Show holder if we have a sprite OR showDefault is enabled
-        const shouldShow = spriteFile || settings.showDefault;
+        // Show holder if we have a sprite OR showDefault is enabled OR avatar fallback
+        const shouldShow = spriteFile || settings.showDefault || settings.useAvatarFallback;
 
         if (holder.length) {
             img = holder.find('img');
@@ -278,6 +321,8 @@ async function updateScenarioDisplay(mainSpriteFolderName) {
                 await setImage(img, spriteFile.imageSrc);
             } else if (settings.showDefault) {
                 setDefaultEmojiForImage(img, expression);
+            } else if (settings.useAvatarFallback) {
+                setAvatarFallbackForImage(img, expression, charName);
             }
             // Update the name label text (in case charName changed)
             holder.find('.expression-plus-scenario-label').text(charName);
@@ -306,6 +351,8 @@ async function updateScenarioDisplay(mainSpriteFolderName) {
                 await setImage(img, spriteFile.imageSrc);
             } else if (settings.showDefault) {
                 setDefaultEmojiForImage(img, expression);
+            } else if (settings.useAvatarFallback) {
+                setAvatarFallbackForImage(img, expression, charName);
             }
 
             template.fadeIn(250);
@@ -430,6 +477,9 @@ async function updateScenarioCharacterSprite(characterKey, spriteFolderName, exp
         if (settings.showDefault && expression !== RESET_SPRITE_LABEL) {
             setDefaultEmojiForImage(img, expression);
             holder.removeClass('hidden');
+        } else if (settings.useAvatarFallback && expression !== RESET_SPRITE_LABEL) {
+            setAvatarFallbackForImage(img, expression, spriteFolderName);
+            holder.removeClass('hidden');
         } else {
             setNoneForImage(img, expression);
         }
@@ -475,6 +525,9 @@ async function updateVnCharacterSprite(spriteFolderName, expression) {
         if (settings.showDefault && expression !== RESET_SPRITE_LABEL) {
             setDefaultEmojiForImage(img, expression);
             holder.removeClass('hidden');
+        } else if (settings.useAvatarFallback && expression !== RESET_SPRITE_LABEL) {
+            setAvatarFallbackForImage(img, expression, spriteFolderName);
+            holder.removeClass('hidden');
         } else {
             setNoneForImage(img, expression);
         }
@@ -483,9 +536,9 @@ async function updateVnCharacterSprite(spriteFolderName, expression) {
 
 /**
  * Sets the expression for a character
- * @param {string} spriteFolderName 
- * @param {string} expression 
- * @param {Object} options 
+ * @param {string} spriteFolderName
+ * @param {string} expression
+ * @param {Object} options
  */
 export async function setExpression(spriteFolderName, expression, { force = false, overrideSpriteFile = null } = {}) {
     if (validateImages) {
@@ -495,11 +548,11 @@ export async function setExpression(spriteFolderName, expression, { force = fals
     const prevExpressionSrc = img.attr('src');
     const expressionClone = img.clone();
 
-    const spriteFile = chooseSpriteForExpression(spriteFolderName, expression, { 
-        prevExpressionSrc, 
-        overrideSpriteFile 
+    const spriteFile = chooseSpriteForExpression(spriteFolderName, expression, {
+        prevExpressionSrc,
+        overrideSpriteFile
     });
-    
+
     if (spriteFile) {
         if (force && isVisualNovelMode()) {
             const context = getContext();
@@ -509,7 +562,7 @@ export async function setExpression(spriteFolderName, expression, { force = fals
             const groupMember = group.members
                 .map(member => context.characters.find(x => x.avatar === member))
                 .find(gm => gm && gm.name === memberName);
-                
+
             if (groupMember) {
                 await setImage($(`.expression-plus-holder[data-avatar="${groupMember.avatar}"] img`), spriteFile.imageSrc);
                 return;
@@ -537,7 +590,7 @@ export async function setExpression(spriteFolderName, expression, { force = fals
 
             img.css('position', 'absolute').width(imgWidth).height(imgHeight);
             expressionClone.addClass('expression-plus-animating');
-            
+
             expressionClone.css({ opacity: 0 }).animate({ opacity: 1 }, duration)
                 .promise().done(function () {
                     img.animate({ opacity: 0 }, duration);
@@ -569,16 +622,25 @@ export async function setExpression(spriteFolderName, expression, { force = fals
         console.info('Expression+ set', { expression: spriteFile.expression, file: spriteFile.fileName });
     } else {
         const settings = getSettings();
+        console.debug('[Expressions+] setExpression fallback', {
+            spriteFolderName,
+            expression,
+            showDefault: settings.showDefault,
+            useAvatarFallback: settings.useAvatarFallback,
+            fallback_expression: settings.fallback_expression,
+        });
         img.attr('data-sprite-folder-name', spriteFolderName);
-        
+
         img.off('error');
-        
+
         if (settings.showDefault && expression !== RESET_SPRITE_LABEL) {
             setDefaultEmojiForImage(img, expression);
+        } else if (settings.useAvatarFallback && expression !== RESET_SPRITE_LABEL) {
+            setAvatarFallbackForImage(img, expression, spriteFolderName);
         } else {
             setNoneForImage(img, expression);
         }
-        
+
         console.debug('Expression+ not found:', expression);
     }
 
@@ -587,13 +649,13 @@ export async function setExpression(spriteFolderName, expression, { force = fals
 
 /**
  * Sends expression update
- * @param {string} spriteFolderName 
- * @param {string} expression 
- * @param {Object} options 
+ * @param {string} spriteFolderName
+ * @param {string} expression
+ * @param {Object} options
  */
 export async function sendExpressionCall(spriteFolderName, expression, { force = false, vnMode = null, overrideSpriteFile = null, isCarouselNavigation = false, scenarioCharacterKey = null } = {}) {
     lastExpression[spriteFolderName.split('/')[0]] = expression;
-    
+
     if (vnMode === null) {
         vnMode = isVisualNovelMode();
     }

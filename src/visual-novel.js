@@ -15,7 +15,7 @@ import {
     getSpriteFolderName, 
     chooseSpriteForExpression 
 } from './sprites.js';
-import { setImage, setDefaultEmojiForImage } from './expression-display.js';
+import { setImage, setDefaultEmojiForImage, setAvatarFallbackForImage } from './expression-display.js';
 import { updateCarousel } from './segment-carousel.js';
 
 let validateImages = null;
@@ -145,9 +145,11 @@ async function visualNovelSetCharacterSprites(vnContainer, spriteFolderName, exp
                 await setImage(img, path);
                 if (!spriteFile && settings.showDefault && expression) {
                     setDefaultEmojiForImage(img, expression);
+                } else if (!spriteFile && settings.useAvatarFallback && expression) {
+                    setAvatarFallbackForImage(img, expression, character.name);
                 }
             }
-            expressionImage.toggleClass('hidden', !spriteFile && !settings.showDefault);
+            expressionImage.toggleClass('hidden', !spriteFile && !settings.showDefault && !settings.useAvatarFallback);
         } else {
             const template = $('#expression-plus-holder').clone();
             template.attr('id', `expression-plus-${avatar}`);
@@ -155,12 +157,14 @@ async function visualNovelSetCharacterSprites(vnContainer, spriteFolderName, exp
             template.find('.drag-grabber').attr('id', `expression-plus-${avatar}header`);
             $('#visual-novel-plus-wrapper').append(template);
             dragElement($(template[0]));
-            template.toggleClass('hidden', !spriteFile && !settings.showDefault);
+            template.toggleClass('hidden', !spriteFile && !settings.showDefault && !settings.useAvatarFallback);
             img = template.find('img');
             if (spriteFile) {
                 await setImage(img, spriteFile.imageSrc);
             } else if (settings.showDefault && expression) {
                 setDefaultEmojiForImage(img, expression);
+            } else if (settings.useAvatarFallback && expression) {
+                setAvatarFallbackForImage(img, expression, character.name);
             } else {
                 await setImage(img, '');
             }
